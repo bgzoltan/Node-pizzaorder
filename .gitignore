@@ -2,3 +2,5 @@ https/*
 node_modules/*
 package-lock.json
 .env
+data/tokens/*
+data/users/*
