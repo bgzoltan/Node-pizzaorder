@@ -4,22 +4,21 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 
+const acceptableMethods = ["GET", "POST", "DELETE", "PUT"];
+
 export function isValidPassword(password) {
   const passwordRegex =
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()\-_+=\[\]{}|;:'",.<>?/]).{8,}$/;
-  console.log("PSW", passwordRegex.test(password));
   return passwordRegex.test(password);
 }
 
 export function isValidEmail(email) {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  console.log("email", emailRegex.test(email));
   return emailRegex.test(email);
 }
 
 export function isValidStreet(street) {
   const streetRegex = /^(?=.*\b\d+\b)(?=.*\b[A-Za-z]+\b).{2,}$/;
-  console.log(streetRegex.test(street));
   return streetRegex.test(street);
 }
 
@@ -59,6 +58,52 @@ export function isValidUserData(user) {
 
   if (firstName && lastName && password && email && street) {
     return true;
+  } else {
+    return false;
+  }
+}
+
+export function isAcceptableMethod(data) {
+  if (acceptableMethods.includes(data.method.toUpperCase())) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export function isValidToken(token) {
+  const email =
+    typeof token.email == "string" && isValidEmail(token.email)
+      ? token.email
+      : false;
+
+  const password =
+    typeof token.password == "string" &&
+    token.password.trim().length >= 8 &&
+    isValidPassword(token.password)
+      ? token.password
+      : false;
+
+  if (email && password) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export function createRandomString(strLength) {
+  strLength = typeof (strLength === "number") ? strLength : false;
+  if (strLength) {
+    const possibleCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let randomStr = "";
+    for (let i = 0; i < strLength; i++) {
+      randomStr =
+        randomStr +
+        possibleCharacters[
+          Math.floor(Math.random() * possibleCharacters.length)
+        ];
+    }
+    return randomStr;
   } else {
     return false;
   }

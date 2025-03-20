@@ -1,3 +1,4 @@
+import { error } from "console";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,18 +7,17 @@ export const dataUtil = {};
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dataUtil.baseDir = path.join(__dirname, ".././data");
-console.log("DIR", dataUtil.baseDir);
 
 dataUtil.create = (dir, fileName, data, callback) => {
-  const userFile = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
-  fs.open(userFile, "wx", (err, fileDescriptor) => {
+  const file = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
+  fs.open(file, "wx", (err, fileDescriptor) => {
     if (!err && fileDescriptor) {
       const stringData = JSON.stringify(data);
       fs.write(fileDescriptor, stringData, (err) => {
         if (!err) {
           fs.close(fileDescriptor, (err) => {
             if (!err) {
-              callback(200);
+              callback(false);
             } else {
               callback(400, { error: "could not close the data file." });
             }
