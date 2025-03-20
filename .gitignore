@@ -1,6 +1,4 @@
 https/*
-data/tokens/*
-data/users/*
 node_modules/*
 package-lock.json
 .env
