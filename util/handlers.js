@@ -5,6 +5,7 @@ import {
   isAcceptableMethod,
   isValidToken,
   createRandomString,
+  isValidNotExpiredToken,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 
@@ -19,16 +20,31 @@ handlers._users.get = (data, callback) => {
     typeof query.email == "string" && isValidEmail(query.email)
       ? query.email
       : false;
-
   if (email) {
-    dataUtil.read("users", email, (err, data) => {
-      if (!err && data) {
-        const { password, ...userWOPassword } = data;
-        callback(200, userWOPassword);
-      } else {
-        callback(err, data);
-      }
-    });
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, email, function (err) {
+        if (!err) {
+          dataUtil.read("users", email, (err, data) => {
+            if (!err && data) {
+              const { password, ...userWOPassword } = data;
+              callback(200, userWOPassword);
+            } else {
+              callback(err, data);
+            }
+          });
+        } else {
+          callback(403, {
+            error: err,
+          });
+        }
+      });
+    } else {
+      callback(400, { error: "missing or invalid token." });
+    }
   } else {
     callback(400, { Error: "missing or invalid email." });
   }
@@ -147,22 +163,26 @@ handlers._tokens.post = (data, callback) => {
           callback(400, { error: "token is not valid." });
         }
       });
-      // const hashedPassword = hash(user.password);
-      // //   The user cannot update his email address
-      // dataUtil.update(
-      //   "users",
-      //   user.email,
-      //   {
-      //     firstName: user.firstName,
-      //     lastName: user.lastName,
-      //     street: user.street,
-      //     password: hashedPassword,
-      //   },
-      //   callback
-      // );
     } else {
       callback(400, { Error: "missing or invalid data." });
     }
+  }
+};
+
+handlers._tokens.get = (data, callback) => {
+  const { query } = data;
+  const tokenId =
+    typeof query.id == "string" && query.id.length == 20 ? query.id : false;
+  if (tokenId) {
+    dataUtil.read("tokens", tokenId, (err, tokenData) => {
+      if (!err && tokenData) {
+        callback(200, tokenData);
+      } else {
+        callback(400, { error: "the token does not exist." });
+      }
+    });
+  } else {
+    callback(400, { error: "the token is missing or invalid." });
   }
 };
 

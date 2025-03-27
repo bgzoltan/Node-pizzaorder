@@ -2,6 +2,7 @@ import crypto from "crypto";
 
 // Loading environment variables - necessary to install with npm
 import dotenv from "dotenv";
+import { dataUtil } from "./dataUtils.js";
 dotenv.config();
 
 const acceptableMethods = ["GET", "POST", "DELETE", "PUT"];
@@ -107,4 +108,18 @@ export function createRandomString(strLength) {
   } else {
     return false;
   }
+}
+
+export function isValidNotExpiredToken(tokenId, userEmail, callback) {
+  dataUtil.read("tokens", tokenId, (err, token) => {
+    if (!err && token) {
+      if (token.email === userEmail && token.expires > Date.now()) {
+        return callback(false);
+      } else {
+        return callback("unauthorized access.");
+      }
+    } else {
+      return callback("token does not exist.");
+    }
+  });
 }
