@@ -101,19 +101,38 @@ handlers._users.put = (data, callback) => {
     const user = JSON.parse(payload);
 
     if (isValidUserData(user)) {
-      const hashedPassword = hash(user.password);
-      //   The user cannot update his email address
-      dataUtil.update(
-        "users",
-        user.email,
-        {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          street: user.street,
-          password: hashedPassword,
-        },
-        callback
-      );
+      const email =
+        typeof data.query.email === "string" ? data.query.email : false;
+      const tokenId =
+        typeof data.headers.token === "string" &&
+        data.headers.token.length == 20
+          ? data.headers.token
+          : false;
+      if (tokenId) {
+        isValidNotExpiredToken(tokenId, email, function (err) {
+          if (!err) {
+            const hashedPassword = hash(user.password);
+            //   The user cannot update his email address
+            dataUtil.update(
+              "users",
+              user.email,
+              {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                street: user.street,
+                password: hashedPassword,
+              },
+              callback
+            );
+          } else {
+            callback(403, {
+              error: err,
+            });
+          }
+        });
+      } else {
+        callback(400, { error: "missing or invalid token." });
+      }
     } else {
       callback(400, { Error: "missing or invalid data." });
     }
