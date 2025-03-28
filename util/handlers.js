@@ -38,12 +38,12 @@ handlers._users.get = (data, callback) => {
           });
         } else {
           callback(403, {
-            error: err,
+            Error: err,
           });
         }
       });
     } else {
-      callback(400, { error: "missing or invalid token." });
+      callback(400, { Error: "missing or invalid token." });
     }
   } else {
     callback(400, { Error: "missing or invalid email." });
@@ -58,13 +58,29 @@ handlers._users.delete = (data, callback) => {
       : false;
 
   if (email) {
-    dataUtil.delete("users", email, (err, data) => {
-      if (!err) {
-        callback(200, data);
-      } else {
-        callback(err, data);
-      }
-    });
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, email, function (err) {
+        if (!err) {
+          dataUtil.delete("users", email, (err, data) => {
+            if (!err) {
+              callback(200, data);
+            } else {
+              callback(err, data);
+            }
+          });
+        } else {
+          callback(403, {
+            Error: err,
+          });
+        }
+      });
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
   } else {
     callback(400, { Error: "missing or invalid email." });
   }
@@ -101,15 +117,14 @@ handlers._users.put = (data, callback) => {
     const user = JSON.parse(payload);
 
     if (isValidUserData(user)) {
-      const email =
-        typeof data.query.email === "string" ? data.query.email : false;
       const tokenId =
         typeof data.headers.token === "string" &&
         data.headers.token.length == 20
           ? data.headers.token
           : false;
+
       if (tokenId) {
-        isValidNotExpiredToken(tokenId, email, function (err) {
+        isValidNotExpiredToken(tokenId, user.email, function (err) {
           if (!err) {
             const hashedPassword = hash(user.password);
             //   The user cannot update his email address
@@ -122,16 +137,24 @@ handlers._users.put = (data, callback) => {
                 street: user.street,
                 password: hashedPassword,
               },
-              callback
+              (err, data) => {
+                if (!err && data) {
+                  // Don't send back the password
+                  const { password, ...userWOPassword } = data;
+                  callback(200, userWOPassword);
+                } else {
+                  callback(err, data);
+                }
+              }
             );
           } else {
             callback(403, {
-              error: err,
+              Error: err,
             });
           }
         });
       } else {
-        callback(400, { error: "missing or invalid token." });
+        callback(400, { Error: "missing or invalid token." });
       }
     } else {
       callback(400, { Error: "missing or invalid data." });
@@ -150,6 +173,7 @@ handlers.users = (data, callback) => {
 // TOKENS *****************
 handlers._tokens = {};
 
+// LOGIN
 handlers._tokens.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
   if (!payload) {
@@ -170,16 +194,16 @@ handlers._tokens.post = (data, callback) => {
             };
             dataUtil.create("tokens", tokenId, tokenObject, (err) => {
               if (!err) {
-                callback(200);
+                callback(false, { success: "login was successfull" });
               } else {
-                callback(400, { error: "could not create the token." });
+                callback(400, { Error: "could not create the token." });
               }
             });
           } else {
-            callback(400, { error: "token is not valid." });
+            callback(400, { Error: "token is not valid." });
           }
         } else {
-          callback(400, { error: "token is not valid." });
+          callback(400, { Error: "token is not valid." });
         }
       });
     } else {
@@ -189,19 +213,54 @@ handlers._tokens.post = (data, callback) => {
 };
 
 handlers._tokens.get = (data, callback) => {
-  const { query } = data;
+  // because of security reasons the token will be send in the headers
   const tokenId =
-    typeof query.id == "string" && query.id.length == 20 ? query.id : false;
+    typeof data.headers.token === "string" && data.headers.token.length == 20
+      ? data.headers.token
+      : false;
   if (tokenId) {
     dataUtil.read("tokens", tokenId, (err, tokenData) => {
       if (!err && tokenData) {
         callback(200, tokenData);
       } else {
-        callback(400, { error: "the token does not exist." });
+        callback(400, { Error: "the token does not exist." });
       }
     });
   } else {
-    callback(400, { error: "the token is missing or invalid." });
+    callback(400, { Error: "the token is missing or invalid." });
+  }
+};
+
+// LOGOUT
+handlers._tokens.delete = (data, callback) => {
+  // because of security reasons the token will be send in the headers
+  const tokenId =
+    typeof data.headers.token === "string" && data.headers.token.length == 20
+      ? data.headers.token
+      : false;
+
+  // to identify the user it's email will be send in the body
+  const payload = typeof data.payload == "string" ? data.payload : false;
+  const user = JSON.parse(payload);
+  if (tokenId) {
+    isValidNotExpiredToken(tokenId, user.email, function (err) {
+      if (!err) {
+        dataUtil.delete("tokens", tokenId, (err) => {
+          if (!err) {
+            callback(false, { success: "logout was successsfull." });
+          } else {
+            callback(
+              400,
+              "Error: could not delete the token, logout was not successfull."
+            );
+          }
+        });
+      } else {
+        callback(400, { Error: err });
+      }
+    });
+  } else {
+    callback(400, { Error: "the token is missing or invalid." });
   }
 };
 

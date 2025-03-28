@@ -19,16 +19,16 @@ dataUtil.create = (dir, fileName, data, callback) => {
             if (!err) {
               callback(false);
             } else {
-              callback(400, { error: "could not close the data file." });
+              callback(400, { Error: "could not close the data file." });
             }
           });
         } else {
-          callback(400, { error: "could not write the data." });
+          callback(400, { Error: "could not write the data." });
         }
       });
     } else {
       callback(400, {
-        error: "could not create the data or the data already exists.",
+        Error: "could not create the data or the data already exists.",
       });
     }
   });
@@ -47,15 +47,15 @@ dataUtil.read = (dir, fileName, callback) => {
             if (!err) {
               callback(false, data);
             } else {
-              callback(400, { error: "could not close the data file." });
+              callback(400, { Error: "could not close the data file." });
             }
           });
         } else {
-          callback(400, { error: "could not read the data file." });
+          callback(400, { Error: "could not read the data file." });
         }
       });
     } else {
-      callback(404, { error: "the specified data does not exist." });
+      callback(404, { Error: "the specified data does not exist." });
     }
   });
 };
@@ -66,7 +66,7 @@ dataUtil.delete = (dir, fileName, callback) => {
     if (!err) {
       callback(false, {});
     } else {
-      callback(400, { error: "could not delete the data." });
+      callback(400, { Error: "could not delete the data." });
     }
   });
 };
@@ -85,19 +85,19 @@ dataUtil.update = (dir, fileName, data, callback) => {
                 if (!err) {
                   callback(false, data);
                 } else {
-                  callback(400, { error: "could not close the file." });
+                  callback(400, { Error: "could not close the file." });
                 }
               });
             } else {
-              callback(400, { error: "could not write the data file." });
+              callback(400, { Error: "could not write the data file." });
             }
           });
         } else {
-          callback(400, { error: "could not empty the data file." });
+          callback(400, { Error: "could not empty the data file." });
         }
       });
     } else {
-      callback(404, { error: "the data does not exist." });
+      callback(404, { Error: "the data does not exist." });
     }
   });
 };

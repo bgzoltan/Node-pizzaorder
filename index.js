@@ -27,7 +27,7 @@ pizzaServer.httpsServer = https.createServer(
 );
 
 pizzaServer.unifiedServer = (req, res) => {
-  const headers = { ...req.headers, "Content-Type": "application/json" };
+  const headers = req.headers;
   const method = req.method.toLowerCase();
   const prasedUrl = url.parse(req.url, true);
   const query = prasedUrl.query;
@@ -57,12 +57,18 @@ pizzaServer.unifiedServer = (req, res) => {
         : false;
 
     const handlerCallback = (statusCode, payload) => {
-      statusCode = typeof statusCode == "number" ? statusCode : 200;
-      payload = typeof payload == "object" ? payload : {};
-
-      const payloadString = JSON.stringify(payload);
-      res.writeHead(statusCode, headers);
-      res.end(payloadString);
+      try {
+        statusCode = typeof statusCode == "number" ? statusCode : 200;
+        payload = typeof payload == "object" ? payload : {};
+        const payloadString = JSON.stringify(payload);
+        const headers = { "content-type": "application/json" };
+        res.writeHead(statusCode, headers);
+        res.end(payloadString);
+      } catch (error) {
+        console.error("Error in response: ", error);
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ Error: "Internal Server Error" }));
+      }
     };
 
     if (!selectedRouter) {
