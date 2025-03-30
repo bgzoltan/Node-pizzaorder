@@ -5,8 +5,6 @@ import dotenv from "dotenv";
 import { dataUtil } from "./dataUtils.js";
 dotenv.config();
 
-const acceptableMethods = ["GET", "POST", "DELETE", "PUT"];
-
 export function isValidPassword(password) {
   const passwordRegex =
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()\-_+=\[\]{}|;:'",.<>?/]).{8,}$/;
@@ -64,7 +62,7 @@ export function isValidUserData(user) {
   }
 }
 
-export function isAcceptableMethod(data) {
+export function isAcceptableMethod(acceptableMethods, data) {
   if (acceptableMethods.includes(data.method.toUpperCase())) {
     return true;
   } else {
@@ -116,10 +114,10 @@ export function isValidNotExpiredToken(tokenId, userEmail, callback) {
       if (token.email === userEmail && token.expires > Date.now()) {
         return callback(false);
       } else {
-        return callback("unauthorized access.");
+        return callback("unauthorized access or user is not logged in.");
       }
     } else {
-      return callback("token does not exist.");
+      return callback("token does not exist or user is logged out.");
     }
   });
 }

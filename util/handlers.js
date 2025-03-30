@@ -8,6 +8,7 @@ import {
   isValidNotExpiredToken,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
+import { pizzaMenuList } from "../data/menu/menu.js";
 
 export const handlers = {};
 
@@ -163,7 +164,7 @@ handlers._users.put = (data, callback) => {
 };
 
 handlers.users = (data, callback) => {
-  if (isAcceptableMethod(data)) {
+  if (isAcceptableMethod(["GET", "POST", "DELETE", "PUT"], data)) {
     handlers._users[data.method](data, callback);
   } else {
     callback(405, { Error: "this request method is not allowed." });
@@ -265,9 +266,48 @@ handlers._tokens.delete = (data, callback) => {
 };
 
 handlers.tokens = (data, callback) => {
-  if (isAcceptableMethod(data)) {
+  if (isAcceptableMethod(["GET", "POST", "DELETE", "PUT"], data)) {
     handlers._tokens[data.method](data, callback);
   } else {
     callback(405, { Error: "this request method is not allowed." });
+  }
+};
+
+// PIZZAMENU *****************
+
+handlers._pizzamenu = {};
+
+handlers.pizzamenu = (data, callback) => {
+  if (isAcceptableMethod(["GET"], data)) {
+    handlers._pizzamenu[data.method](data, callback);
+  } else {
+    callback(405, { Error: "this request method is not allowed." });
+  }
+};
+
+handlers._pizzamenu.get = (data, callback) => {
+  const { query } = data;
+  const email =
+    typeof query.email == "string" && isValidEmail(query.email)
+      ? query.email
+      : false;
+  if (email) {
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, email, function (err) {
+        if (!err) {
+          callback(200, pizzaMenuList);
+        } else {
+          callback(400, { Error: err });
+        }
+      });
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
+  } else {
+    callback(400, { Error: "missing or invalid user email." });
   }
 };

@@ -86,4 +86,5 @@ pizzaServer.httpsServer.listen(3000, () =>
 pizzaServer.routing = {
   users: handlers.users,
   tokens: handlers.tokens,
+  pizzamenu: handlers.pizzamenu,
 };
