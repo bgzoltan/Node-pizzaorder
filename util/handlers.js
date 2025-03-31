@@ -319,7 +319,7 @@ handlers._pizzamenu.get = (data, callback) => {
 handlers._shoppingcart = {};
 
 handlers.shoppingcart = (data, callback) => {
-  if (isAcceptableMethod(["POST"], data)) {
+  if (isAcceptableMethod(["POST", "PUT", "DELETE"], data)) {
     handlers._shoppingcart[data.method](data, callback);
   } else {
     callback(405, { Error: "this request method is not allowed." });
@@ -401,5 +401,117 @@ handlers._shoppingcart.post = (data, callback) => {
     }
   } else {
     callback(400, { Error: "missing shopping cart data." });
+  }
+};
+
+// MODIFY SHOPPING CART
+handlers._shoppingcart.put = (data, callback) => {
+  const payload = typeof data.payload == "string" ? data.payload : false;
+
+  if (payload) {
+    const shoppingCart = JSON.parse(payload);
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, shoppingCart.email, function (err) {
+        if (!err) {
+          const items =
+            typeof shoppingCart.items == "object" &&
+            shoppingCart.items instanceof Array &&
+            shoppingCart.items.length > 0;
+          const shoppingCartModificationDate = parseInt(Date.now());
+          const modifiedShoppingCart = {
+            ...shoppingCart,
+            date: shoppingCartModificationDate,
+          };
+          if (items) {
+            // Check if shopping cart already exists
+            dataUtil.read(
+              "shopping-carts",
+              shoppingCart.email,
+              (err, shoppingCartData) => {
+                if (!err && shoppingCartData) {
+                  // Check the orderable items.
+                  anyNotAvailableItems(
+                    shoppingCart,
+                    (err, notAvailableItems) => {
+                      if (err) {
+                        callback(400, {
+                          Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
+                        });
+                      } else {
+                        // Modify shopping cart
+                        dataUtil.update(
+                          "shopping-carts",
+                          shoppingCart.email,
+                          modifiedShoppingCart,
+                          (err) => {
+                            if (!err) {
+                              callback(200, modifiedShoppingCart);
+                            } else {
+                              callback(400, { Error: err });
+                            }
+                          }
+                        );
+                      }
+                    }
+                  );
+                } else {
+                  callback(405, {
+                    Error: "shopping card does not exists.",
+                  });
+                }
+              }
+            );
+          } else {
+            callback(400, { Error: "missing shopping cart items." });
+          }
+        } else {
+          callback(400, { Error: err });
+        }
+      });
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
+  } else {
+    callback(400, { Error: "missing shopping cart data." });
+  }
+};
+
+handlers._shoppingcart.delete = (data, callback) => {
+  const { query } = data;
+  const email =
+    typeof query.email == "string" && isValidEmail(query.email)
+      ? query.email
+      : false;
+  if (email) {
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, email, function (err) {
+        if (!err) {
+          // Delete shopping cart
+          dataUtil.delete("shopping-carts", email, (err) => {
+            if (!err) {
+              callback(200, { Success: "Shopping cart now is empty." });
+            } else {
+              callback(400, {
+                Error: err,
+              });
+            }
+          });
+        } else {
+          callback(400, { Error: err });
+        }
+      });
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
+  } else {
+    callback(400, { Error: "missing user data." });
   }
 };
