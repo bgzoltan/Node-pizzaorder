@@ -3,6 +3,7 @@ import crypto from "crypto";
 // Loading environment variables - necessary to install with npm
 import dotenv from "dotenv";
 import { dataUtil } from "./dataUtils.js";
+import { pizzaMenuList } from "../data/menu/menu.js";
 dotenv.config();
 
 export function isValidPassword(password) {
@@ -120,4 +121,21 @@ export function isValidNotExpiredToken(tokenId, userEmail, callback) {
       return callback("token does not exist or user is logged out.");
     }
   });
+}
+
+export function anyNotAvailableItems(shoppingCart, callback) {
+  const pizzaItemsAreNotInMenuList = [];
+  const availablePizzaItems = pizzaMenuList.items.map((item) =>
+    item.name.toLowerCase()
+  );
+  for (const cartItem of shoppingCart.items) {
+    if (!availablePizzaItems.includes(cartItem.toLowerCase())) {
+      pizzaItemsAreNotInMenuList.push(cartItem);
+    }
+  }
+  if (pizzaItemsAreNotInMenuList.length > 0) {
+    callback(400, pizzaItemsAreNotInMenuList);
+  } else {
+    callback(false, pizzaItemsAreNotInMenuList);
+  }
 }

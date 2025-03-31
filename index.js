@@ -87,4 +87,5 @@ pizzaServer.routing = {
   users: handlers.users,
   tokens: handlers.tokens,
   pizzamenu: handlers.pizzamenu,
+  shoppingcart: handlers.shoppingcart,
 };
