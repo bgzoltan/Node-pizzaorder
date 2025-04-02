@@ -8,6 +8,7 @@ import {
   isValidNotExpiredToken,
   anyNotAvailableItems,
   isValidCard,
+  sendEmailMessage,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -19,6 +20,21 @@ dotenv.config();
 export const stripe = new Stripe(process.env.STRIPE_SECRET, {
   apiVersion: "2025-02-24.acacia",
 });
+const month = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export const handlers = {};
 
 // USERS HANDLERS *****************
@@ -544,7 +560,6 @@ handlers.order = (data, callback) => {
 
       // Checking shopping carts
       dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
-        console.log("READ", err, shoppingCartData);
         if (!err && shoppingCartData) {
           // Validating payment details
           const amount =
@@ -594,12 +609,42 @@ handlers.order = (data, callback) => {
                           ...{ ...payment, card: modifiedCard },
                           ...shoppingCartData,
                         };
-                        callback(200, {
-                          Success: paymentDetails,
-                        });
+
+                        // Email meassage form
+                        const currentDate = new Date();
+                        const htmlMessage = `
+                        <h1>Thank you for your order!</h1>
+                        <p>Successfull payment on our NODEJS test server.</p>
+                        <p>Your order #${paymentDetails.paymentId} on ${
+                          currentDate.getDay() - 2
+                        }th of ${
+                          month[currentDate.getMonth()]
+                        }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}  has been confirmed.</p>
+                        <p><strong>Amount: ${amount} ${currency} </strong></p>
+                        <p>Card No.: ${modifiedCard.number}</p>
+                        <p>You have ordered the following items: </p>
+                        <p><strong>${shoppingCartData.items}<strong></p>
+                        <p>Thanks,<br>Happy Pizza</p>
+                      `;
+
+                        // Sending email
+                        sendEmailMessage(
+                          email,
+                          "Thank you for your order.",
+                          htmlMessage,
+                          (err, messageData) => {
+                            if (!err && messageData) {
+                              callback(200, {
+                                Success: paymentDetails,
+                              });
+                            } else {
+                              callback(200, { Error: err });
+                            }
+                          }
+                        );
                       })
                       .catch((err) => {
-                        callback(500, { error: err.message });
+                        callback(500, { Error: err.message });
                       });
                   } else {
                     callback(400, { Error: err });

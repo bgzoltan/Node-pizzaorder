@@ -4,6 +4,8 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
+import FormData from "form-data";
+import Mailgun from "mailgun.js";
 dotenv.config();
 
 export function isValidPassword(password) {
@@ -197,4 +199,27 @@ export function isValidCard(cardData, callback) {
   } else {
     callback("missing card details.");
   }
+}
+
+export function sendEmailMessage(email, subject, htmlMessage, callback) {
+  const mailgun = new Mailgun(FormData);
+  const mg = mailgun.client({
+    username: "api",
+    key: process.env.MAILGUN_API_KEY,
+  });
+
+  mg.messages
+    .create("sandbox27fa53e0eabb42609cfd27bc9421a357.mailgun.org", {
+      from: "Mailgun Sandbox <postmaster@sandbox27fa53e0eabb42609cfd27bc9421a357.mailgun.org>",
+      to: [`${email}`],
+      subject: subject,
+      html: htmlMessage,
+      tag: "test message",
+    })
+    .then((data) => {
+      callback(false, data);
+    })
+    .catch((error) => {
+      callback(400, err);
+    });
 }
