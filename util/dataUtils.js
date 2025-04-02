@@ -1,4 +1,3 @@
-import { error } from "console";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dataUtil.baseDir = path.join(__dirname, ".././data");
 
+// Creating a specified file
 dataUtil.create = (dir, fileName, data, callback) => {
   const file = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
   fs.open(file, "wx", (err, fileDescriptor) => {
@@ -19,7 +19,7 @@ dataUtil.create = (dir, fileName, data, callback) => {
             if (!err) {
               callback(false);
             } else {
-              callback(400, { Error: "could not close the data file." });
+              callback(400, { Error: "could not close the file." });
             }
           });
         } else {
@@ -28,20 +28,21 @@ dataUtil.create = (dir, fileName, data, callback) => {
       });
     } else {
       callback(400, {
-        Error: "could not create the data or the data already exists.",
+        Error: "could not create the file or already exists.",
       });
     }
   });
 };
 
+// Reading a specified file
 dataUtil.read = (dir, fileName, callback) => {
   const file = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
   fs.open(file, "r", (err, fileDescriptor) => {
     if (!err) {
-      const buffer = Buffer.alloc(1024); // Allocate buffer
+      const buffer = Buffer.alloc(1024); // Allocate buffer for raw data
       fs.read(fileDescriptor, buffer, 0, buffer.length, 0, (err, userData) => {
         if (!err) {
-          const dataString = buffer.toString("utf8", 0, userData);
+          const dataString = buffer.toString("utf8", 0, userData); // decoding buffer data to string format
           const data = JSON.parse(dataString);
           fs.close(fileDescriptor, (err) => {
             if (!err) {
@@ -60,17 +61,19 @@ dataUtil.read = (dir, fileName, callback) => {
   });
 };
 
+// Deleting a specified file
 dataUtil.delete = (dir, fileName, callback) => {
   const file = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
   fs.unlink(file, (err) => {
     if (!err) {
       callback(false, {});
     } else {
-      callback(400, { Error: "could not delete the data." });
+      callback(400, { Error: "could not delete the file." });
     }
   });
 };
 
+// Modifying a file
 dataUtil.update = (dir, fileName, data, callback) => {
   const userFile = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
   fs.open(userFile, "r+", (err, fileDescriptor) => {

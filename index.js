@@ -12,9 +12,10 @@ let debug = util.debuglog("index");
 let pizzaServer = {};
 // Define __filename and __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export const __dirname = path.dirname(__filename);
 
-// Before this we need to provide ssl support: openssl req -newkey rsa:2048 -new -nodes -x509 -days 365 -keyout key.pem -out cert.pem
+// To provide ssl support must to create cert and key files:
+// openssl req -newkey rsa:2048 -new -nodes -x509 -days 365 -keyout key.pem -out cert.pem
 pizzaServer.httpsParams = {
   cert: fs.readFileSync(path.join(__dirname, "./https/cert.pem")),
   key: fs.readFileSync(path.join(__dirname, "./https/key.pem")),
@@ -29,9 +30,9 @@ pizzaServer.httpsServer = https.createServer(
 pizzaServer.unifiedServer = (req, res) => {
   const headers = req.headers;
   const method = req.method.toLowerCase();
-  const prasedUrl = url.parse(req.url, true);
-  const query = prasedUrl.query;
-  const pathName = prasedUrl.pathname;
+  const parsedUrl = url.parse(req.url, true);
+  const query = parsedUrl.query;
+  const pathName = parsedUrl.pathname;
   const trimmedPath = pathName.split("/").join("");
   const decoder = new StringDecoder("utf-8");
 

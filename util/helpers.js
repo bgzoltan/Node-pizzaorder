@@ -1,11 +1,10 @@
 import crypto from "crypto";
 
-// Loading environment variables - necessary to install with npm
-import dotenv from "dotenv";
+import dotenv from "dotenv"; // Loading environment variables - necessary to install with npm
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
 import FormData from "form-data";
-import Mailgun from "mailgun.js";
+import Mailgun from "mailgun.js"; // Email integration
 dotenv.config();
 
 export function isValidPassword(password) {
