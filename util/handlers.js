@@ -7,13 +7,21 @@ import {
   createRandomString,
   isValidNotExpiredToken,
   anyNotAvailableItems,
+  isValidCard,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
+import Stripe from "stripe";
 
+import dotenv from "dotenv";
+dotenv.config();
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET, {
+  apiVersion: "2025-02-24.acacia",
+});
 export const handlers = {};
 
-// USERS *****************
+// USERS HANDLERS *****************
 handlers._users = {};
 
 handlers._users.get = (data, callback) => {
@@ -172,7 +180,7 @@ handlers.users = (data, callback) => {
   }
 };
 
-// TOKENS *****************
+// TOKENS HANDLERS *****************
 handlers._tokens = {};
 
 // LOGIN
@@ -274,7 +282,7 @@ handlers.tokens = (data, callback) => {
   }
 };
 
-// PIZZAMENU *****************
+// PIZZAMENU HANDLERS *****************
 
 handlers._pizzamenu = {};
 
@@ -314,7 +322,7 @@ handlers._pizzamenu.get = (data, callback) => {
   }
 };
 
-// SHOPPING CART *****************
+// SHOPPING CART HANDLERS *****************
 
 handlers._shoppingcart = {};
 
@@ -347,7 +355,7 @@ handlers._shoppingcart.post = (data, callback) => {
           const shoppingCartDate = parseInt(Date.now());
           const modifiedShoppingCart = {
             ...shoppingCart,
-            date: shoppingCartDate,
+            orderDate: shoppingCartDate,
           };
           if (items) {
             // Check if shopping cart already exists
@@ -480,6 +488,7 @@ handlers._shoppingcart.put = (data, callback) => {
   }
 };
 
+// DELETE SHOPPING CART
 handlers._shoppingcart.delete = (data, callback) => {
   const { query } = data;
   const email =
@@ -513,5 +522,111 @@ handlers._shoppingcart.delete = (data, callback) => {
     }
   } else {
     callback(400, { Error: "missing user data." });
+  }
+};
+
+// ORDER AND CARD PAYMENT
+handlers.order = (data, callback) => {
+  const payload = typeof data.payload == "string" ? data.payload : false;
+
+  if (payload) {
+    const payment = JSON.parse(payload);
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+
+    if (tokenId) {
+      const email =
+        typeof payment.email == "string" && isValidEmail(payment.email)
+          ? payment.email
+          : false;
+
+      // Checking shopping carts
+      dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
+        console.log("READ", err, shoppingCartData);
+        if (!err && shoppingCartData) {
+          // Validating payment details
+          const amount =
+            typeof payment.amount == "number" &&
+            payment.amount > 0 &&
+            payment.amount < 1000
+              ? payment.amount
+              : false;
+          const currency =
+            typeof payment.currency == "string" &&
+            ["aud", "usd"].includes(payment.currency.toLowerCase())
+              ? payment.currency
+              : false;
+
+          if (email && amount && currency) {
+            const card = typeof payment.card == "object" ? payment.card : false;
+
+            isValidNotExpiredToken(tokenId, email, function (err) {
+              if (!err) {
+                // Checking card details
+                isValidCard(card, (err) => {
+                  if (!err) {
+                    // Executing payment with Stripe integration
+                    // createStripePaymentMethod(card, (err, paymentMethod) => {}) only necessary if I want to create a paymentMethod in live mode
+                    // In test mode "pm_card_visa" is used instead of "card" details
+
+                    const paymentObject = {
+                      amount,
+                      currency,
+                      payment_method: "pm_card_visa", // instead of card in test mode
+                      automatic_payment_methods: { enabled: true },
+                      confirm: false,
+                    };
+                    stripe.paymentIntents
+                      .create(paymentObject)
+                      .then((paymentIntent) => {
+                        // Hide card details in response
+                        const modifiedCard = {
+                          ...card,
+                          number: "xxxxxxxxxxxx" + card.number.slice(12, 16),
+                          exp_month: "",
+                          exp_year: "",
+                          cvc: "",
+                        };
+                        const paymentDetails = {
+                          paymentId: paymentIntent.created,
+                          ...{ ...payment, card: modifiedCard },
+                          ...shoppingCartData,
+                        };
+                        callback(200, {
+                          Success: paymentDetails,
+                        });
+                      })
+                      .catch((err) => {
+                        callback(500, { error: err.message });
+                      });
+                  } else {
+                    callback(400, { Error: err });
+                  }
+                });
+              } else {
+                callback(400, { Error: err });
+              }
+            });
+          } else {
+            callback(400, {
+              Error: `the following data is missing or invalid: ${
+                email ? "" : "email "
+              } ${amount ? "" : "amount "} ${currency ? "" : "currency."}`,
+            });
+          }
+        } else {
+          callback(400, {
+            Error: "shopping cart is empty or something went wrong: ",
+            err,
+          });
+        }
+      });
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
+  } else {
+    callback(400, { Error: "missing or invalid payment data." });
   }
 };

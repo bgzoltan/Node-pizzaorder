@@ -47,15 +47,15 @@ dataUtil.read = (dir, fileName, callback) => {
             if (!err) {
               callback(false, data);
             } else {
-              callback(400, { Error: "could not close the data file." });
+              callback(400, { Error: "could not close the file." });
             }
           });
         } else {
-          callback(400, { Error: "could not read the data file." });
+          callback(400, { Error: "could not read the file." });
         }
       });
     } else {
-      callback(404, { Error: "the specified data does not exist." });
+      callback(404, { Error: "the file does not exist." });
     }
   });
 };

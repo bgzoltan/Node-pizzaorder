@@ -139,3 +139,62 @@ export function anyNotAvailableItems(shoppingCart, callback) {
     callback(false, pizzaItemsAreNotInMenuList);
   }
 }
+
+export function createStripePaymentMethod(cardDetails, callback) {
+  // Instead of using the card details of the user currently I use the stripe test card 'pm_card_visa'
+  // *** 'pm_card_visa'
+  // const card={
+  //   number: "4242424242424242", // Test Visa card
+  //   exp_month: 12,
+  //   exp_year: 2025,
+  //   cvc: "123",
+  // };
+  // stripe.paymentMethods
+  //   .create({
+  //     type: "card",
+  //     card: card,
+  //   })
+  //   .then((paymentMethod) => {
+  //     console.log("Payment method created", paymentMethod.id);
+  //     callback(201, paymentMethod.id);
+  //   })
+  //   .catch((error) => {
+  //     console.log("Something wrong", error);
+  //     callback(400, error);
+  //   });
+}
+
+export function isValidCard(cardData, callback) {
+  if (typeof cardData == "object") {
+    const onlyNumbersRegex = /^\d+$/;
+    const isValidNumber =
+      typeof cardData.number == "string" &&
+      onlyNumbersRegex.test(cardData.number) &&
+      cardData.number.length == 16;
+    const isValidMonth =
+      typeof cardData.exp_month == "number" &&
+      cardData.exp_month >= 1 &&
+      cardData.exp_month <= 12;
+    const currentYear = new Date().getFullYear();
+    const isValidYear =
+      typeof cardData.exp_year == "number" &&
+      cardData.exp_year >= currentYear &&
+      cardData.exp_year <= currentYear + 10;
+    const isValidCvc =
+      typeof cardData.cvc == "string" && cardData.cvc.length === 3;
+
+    if (isValidNumber && isValidMonth && isValidYear && isValidCvc) {
+      callback(false);
+    } else {
+      callback(
+        `the following card data is missing or invalid: ${
+          isValidNumber ? "" : "number,"
+        } ${isValidMonth ? "" : "month,"} ${isValidYear ? "" : "year,"} ${
+          isValidCvc ? "" : "cvc,"
+        }`
+      );
+    }
+  } else {
+    callback("missing card details.");
+  }
+}
