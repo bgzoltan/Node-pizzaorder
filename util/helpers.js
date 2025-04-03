@@ -218,7 +218,7 @@ export function sendEmailMessage(email, subject, htmlMessage, callback) {
     .then((data) => {
       callback(false, data);
     })
-    .catch((error) => {
+    .catch((err) => {
       callback(400, err);
     });
 }

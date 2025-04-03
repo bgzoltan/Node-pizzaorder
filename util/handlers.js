@@ -40,6 +40,40 @@ export const handlers = {};
 // USERS HANDLERS *****************
 handlers._users = {};
 
+// CREATE USER
+// sample user payload in json:
+// {
+//   "firstName": "Zoltan",
+//   "lastName": "B",
+//   "email": "zoltan@gmail.com",
+//   "street": "2 Aquastreet QLD 4215",
+//   "password": "abcdefgh1#"
+// }
+// to identify the user I simply used the email address
+handlers._users.post = (data, callback) => {
+  const payload = typeof data.payload == "string" ? data.payload : false;
+
+  if (!payload) {
+    callback(400, { Error: "missing data." });
+  } else {
+    const user = JSON.parse(payload);
+
+    if (isValidUserData(user)) {
+      const hashedPassword = hash(user.password);
+      dataUtil.create(
+        "users",
+        user.email,
+        { ...user, password: hashedPassword },
+        callback
+      );
+    } else {
+      callback(400, { Error: "missing or invalid data." });
+    }
+  }
+};
+
+// READ USER DATA
+// email query and token are necessary
 handlers._users.get = (data, callback) => {
   const { query } = data;
   const email =
@@ -76,64 +110,8 @@ handlers._users.get = (data, callback) => {
   }
 };
 
-handlers._users.delete = (data, callback) => {
-  const { query } = data;
-  const email =
-    typeof query.email == "string" && isValidEmail(query.email)
-      ? query.email
-      : false;
-
-  if (email) {
-    const tokenId =
-      typeof data.headers.token === "string" && data.headers.token.length == 20
-        ? data.headers.token
-        : false;
-    if (tokenId) {
-      isValidNotExpiredToken(tokenId, email, function (err) {
-        if (!err) {
-          dataUtil.delete("users", email, (err, data) => {
-            if (!err) {
-              callback(200, data);
-            } else {
-              callback(err, data);
-            }
-          });
-        } else {
-          callback(403, {
-            Error: err,
-          });
-        }
-      });
-    } else {
-      callback(400, { Error: "missing or invalid token." });
-    }
-  } else {
-    callback(400, { Error: "missing or invalid email." });
-  }
-};
-
-handlers._users.post = (data, callback) => {
-  const payload = typeof data.payload == "string" ? data.payload : false;
-
-  if (!payload) {
-    callback(400, { Error: "missing data." });
-  } else {
-    const user = JSON.parse(payload);
-
-    if (isValidUserData(user)) {
-      const hashedPassword = hash(user.password);
-      dataUtil.create(
-        "users",
-        user.email,
-        { ...user, password: hashedPassword },
-        callback
-      );
-    } else {
-      callback(400, { Error: "missing or invalid data." });
-    }
-  }
-};
-
+// MODIFY USER DATA
+// token and payload in json are necessary
 handlers._users.put = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
@@ -188,6 +166,44 @@ handlers._users.put = (data, callback) => {
   }
 };
 
+// DELETE USER DATA
+// email query and token are necessary
+handlers._users.delete = (data, callback) => {
+  const { query } = data;
+  const email =
+    typeof query.email == "string" && isValidEmail(query.email)
+      ? query.email
+      : false;
+
+  if (email) {
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, email, function (err) {
+        if (!err) {
+          dataUtil.delete("users", email, (err, data) => {
+            if (!err) {
+              callback(200, data);
+            } else {
+              callback(err, data);
+            }
+          });
+        } else {
+          callback(403, {
+            Error: err,
+          });
+        }
+      });
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
+  } else {
+    callback(400, { Error: "missing or invalid email." });
+  }
+};
+
 handlers.users = (data, callback) => {
   if (isAcceptableMethod(["GET", "POST", "DELETE", "PUT"], data)) {
     handlers._users[data.method](data, callback);
@@ -200,60 +216,99 @@ handlers.users = (data, callback) => {
 handlers._tokens = {};
 
 // LOGIN
+// sample login payload in json:
+// {
+//   "email":"zoltan@gmail.com",
+//   "password":"abcdefgh1#"
+// }
 handlers._tokens.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
   if (!payload) {
-    callback(400, { Error: "missing token." });
+    callback(400, { Error: "missing token data." });
   } else {
     const token = JSON.parse(payload);
     if (isValidToken(token)) {
       const { email, password } = token;
-      dataUtil.read("users", email, (err, user) => {
-        if (!err && user) {
+
+      dataUtil.read("users", email, (err, userData) => {
+        if (!err && userData) {
           const hashedPassword = hash(password);
           const tokenId = createRandomString(20);
-          if (hashedPassword == user.password) {
-            const tokenObject = {
-              id: tokenId,
-              email,
-              expires: Date.now() + 1000 * 60 * 60,
-            };
-            dataUtil.create("tokens", tokenId, tokenObject, (err) => {
-              if (!err) {
-                callback(false, { success: "login was successfull" });
-              } else {
-                callback(400, { Error: "could not create the token." });
-              }
+
+          // Checking whether the user already logged in
+          // I use loggedin folder to store the users who are logged in
+          dataUtil.read("loggedin", email, (err, logData) => {
+            if (err == 400) {
+              callback(err, {
+                Error: "error occured during login check, " + data["Error"],
+              });
+            }
+            if (err != 404 && logData) {
+              callback(409, { Error: "user already logged in." });
+            } else {
+              // if a user log in I create a log in loggedin folder
+              const loggedInTimeStamp = Date.now();
+              const loggedIn = { tokenId, date: loggedInTimeStamp };
+              dataUtil.create(
+                "loggedin",
+                email,
+                loggedIn,
+                (err, loggedInData) => {
+                  if (!err && loggedInData) {
+                    if (hashedPassword == userData.password) {
+                      const tokenObject = {
+                        id: tokenId,
+                        email,
+                        expires: Date.now() + 1000 * 60 * 60,
+                      };
+                      dataUtil.create(
+                        "tokens",
+                        tokenId,
+                        tokenObject,
+                        (err, tokenData) => {
+                          if (!err) {
+                            callback(false, {
+                              Success: "login was successfull.",
+                            });
+                          } else {
+                            callback(err, {
+                              Error:
+                                "error occured when creating token, " +
+                                tokenData["Error"],
+                            });
+                          }
+                        }
+                      );
+                    } else {
+                      callback(401, { Error: "the password is invalid." });
+                    }
+                  } else {
+                    callback(err, {
+                      Error:
+                        "error occured during login, " + loggedInData["Error"],
+                    });
+                  }
+                }
+              );
+            }
+          });
+        } else {
+          if (err == 404) {
+            callback(401, {
+              Error: "the token is invalid, " + userData["Error"],
             });
           } else {
-            callback(400, { Error: "token is not valid." });
+            callback(401, {
+              Error:
+                "error occured during login, when checking the user, " +
+                userData["Error"],
+            });
           }
-        } else {
-          callback(400, { Error: "token is not valid." });
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid data." });
+      callback(400, { Error: "missing token data or invalid token." });
     }
-  }
-};
-
-handlers._tokens.get = (data, callback) => {
-  // because of security reasons the token will be send in the headers
-  const tokenId =
-    typeof data.headers.token === "string" && data.headers.token.length == 20
-      ? data.headers.token
-      : false;
-  if (tokenId) {
-    dataUtil.read("tokens", tokenId, (err, tokenData) => {
-      if (!err && tokenData) {
-        callback(200, tokenData);
-      } else {
-        callback(400, { Error: "the token does not exist." });
-      }
-    });
-  } else {
-    callback(400, { Error: "the token is missing or invalid." });
   }
 };
 
@@ -265,7 +320,7 @@ handlers._tokens.delete = (data, callback) => {
       ? data.headers.token
       : false;
 
-  // to identify the user it's email will be send in the body
+  // to identify the user it's email will be send in the body because of security reasons
   const payload = typeof data.payload == "string" ? data.payload : false;
   const user = JSON.parse(payload);
   if (tokenId) {
@@ -273,7 +328,17 @@ handlers._tokens.delete = (data, callback) => {
       if (!err) {
         dataUtil.delete("tokens", tokenId, (err) => {
           if (!err) {
-            callback(false, { success: "logout was successsfull." });
+            // Delete log file of the user
+            // TODO: Creating a process to logout users automatically when token expires
+            dataUtil.delete("loggedin", user.email, (err, loggedInData) => {
+              if (!err && loggedInData) {
+                callback(false, { success: "logout was successsfull." });
+              } else {
+                callback(err, {
+                  Error: "error occured during logout, " + loggedInData,
+                });
+              }
+            });
           } else {
             callback(
               400,
@@ -291,7 +356,8 @@ handlers._tokens.delete = (data, callback) => {
 };
 
 handlers.tokens = (data, callback) => {
-  if (isAcceptableMethod(["GET", "POST", "DELETE", "PUT"], data)) {
+  if (isAcceptableMethod(["POST", "DELETE"], data)) {
+    // POST - login, DELETE - logout
     handlers._tokens[data.method](data, callback);
   } else {
     callback(405, { Error: "this request method is not allowed." });
@@ -310,7 +376,8 @@ handlers.pizzamenu = (data, callback) => {
   }
 };
 
-// LIST OF PIZZA MENU ITEMS
+// GET THE FULL PIZZA MENU
+// email query and token are necessary
 handlers._pizzamenu.get = (data, callback) => {
   const { query } = data;
   const email =
@@ -541,7 +608,17 @@ handlers._shoppingcart.delete = (data, callback) => {
   }
 };
 
-// ORDER AND CARD PAYMENT
+// ORDER AND PAYMENT BY CARD
+// sample payment payload in json:
+// {
+//   "email": "kovacsg76@gmail.com",
+//   "amount":900,
+//   "currency":"AUD",
+//   "card":{"number": "4242424242424242",
+//     "exp_month": 12,
+//     "exp_year": 2025,
+//     "cvc": "123"}
+// }
 handlers.order = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
@@ -558,14 +635,14 @@ handlers.order = (data, callback) => {
           ? payment.email
           : false;
 
-      // Checking shopping carts
+      // Checking whether the user already has a shopping cart
       dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
         if (!err && shoppingCartData) {
           // Validating payment details
           const amount =
             typeof payment.amount == "number" &&
             payment.amount > 0 &&
-            payment.amount < 1000
+            payment.amount <= 1000
               ? payment.amount
               : false;
           const currency =
@@ -610,7 +687,7 @@ handlers.order = (data, callback) => {
                           ...shoppingCartData,
                         };
 
-                        // Email meassage form
+                        // Email meassage html form
                         const currentDate = new Date();
                         const htmlMessage = `
                         <h1>Thank you for your order!</h1>
@@ -627,18 +704,20 @@ handlers.order = (data, callback) => {
                         <p>Thanks,<br>Happy Pizza</p>
                       `;
 
-                        // Sending email
+                        // Sending email using Mailgun integration
+                        // On my Mailgun dashboard I have created 2 verified email address to test the message sending
+                        // I can use Maligun free of charge during the next 30 days
                         sendEmailMessage(
                           email,
                           "Thank you for your order.",
                           htmlMessage,
-                          (err, messageData) => {
-                            if (!err && messageData) {
+                          (err, data) => {
+                            if (!err && data) {
                               callback(200, {
                                 Success: paymentDetails,
                               });
                             } else {
-                              callback(200, { Error: err });
+                              callback(200, { Error: data });
                             }
                           }
                         );

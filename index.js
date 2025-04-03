@@ -1,3 +1,4 @@
+// to test and communicate with the server I used postman
 import https from "https";
 import path from "path";
 import { fileURLToPath } from "url";
