@@ -245,3 +245,43 @@ export function summarizeOrderItems(items, callback) {
     callback(false, total);
   }
 }
+
+export function formatMessage(shoppingCartData, paymentDetails, modifiedCard) {
+  const month = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const currentDate = new Date();
+
+  const items = shoppingCartData.items;
+  let htmlItems = `<p><strong>${"Name"}| ${"Qty"} | ${"Price"}</strong></p>`;
+  for (const item of items) {
+    htmlItems += `<p>${item.name} | ${item.qty} | ${item.price}<p>`;
+  }
+  return `
+  <h1>Thank you for your order!</h1>
+  <p>Successfull payment on our NODEJS test server.</p>
+  <p>Your order #${paymentDetails.paymentId} on ${
+    currentDate.getDay() - 2
+  }th of ${
+    month[currentDate.getMonth()]
+  }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}  has been confirmed.</p>
+  <p>Amount: ${paymentDetails.amount} ${paymentDetails.currency}</p>
+  <p>Card No.: ${modifiedCard.number}</p>
+  <p>You have ordered the following items: </p>
+  <p>${htmlItems}</p>
+  <p>Total price: ${shoppingCartData.totalPrice}</p>
+  <p>Thanks,<br>Happy Pizza</p>
+`;
+}

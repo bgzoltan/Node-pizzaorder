@@ -10,6 +10,7 @@ import {
   isValidCard,
   sendEmailMessage,
   summarizeOrderItems,
+  formatMessage,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -21,20 +22,6 @@ dotenv.config();
 export const stripe = new Stripe(process.env.STRIPE_SECRET, {
   apiVersion: "2025-02-24.acacia",
 });
-const month = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 export const handlers = {};
 
@@ -717,21 +704,11 @@ handlers.order = (data, callback) => {
                         };
 
                         // Email meassage html form
-                        const currentDate = new Date();
-                        const htmlMessage = `
-                        <h1>Thank you for your order!</h1>
-                        <p>Successfull payment on our NODEJS test server.</p>
-                        <p>Your order #${paymentDetails.paymentId} on ${
-                          currentDate.getDay() - 2
-                        }th of ${
-                          month[currentDate.getMonth()]
-                        }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}  has been confirmed.</p>
-                        <p><strong>Amount: ${amount} ${currency} </strong></p>
-                        <p>Card No.: ${modifiedCard.number}</p>
-                        <p>You have ordered the following items: </p>
-                        <p><strong>${shoppingCartData.items}<strong></p>
-                        <p>Thanks,<br>Happy Pizza</p>
-                      `;
+                        const htmlMessage = formatMessage(
+                          shoppingCartData,
+                          paymentDetails,
+                          modifiedCard
+                        );
 
                         // Sending email using Mailgun integration
                         // On my Mailgun dashboard I have created 2 verified email address to test the message sending
