@@ -130,8 +130,8 @@ export function anyNotAvailableItems(shoppingCart, callback) {
     item.name.toLowerCase()
   );
   for (const cartItem of shoppingCart.items) {
-    if (!availablePizzaItems.includes(cartItem.toLowerCase())) {
-      pizzaItemsAreNotInMenuList.push(cartItem);
+    if (!availablePizzaItems.includes(cartItem.name.toLowerCase())) {
+      pizzaItemsAreNotInMenuList.push(cartItem.name);
     }
   }
   if (pizzaItemsAreNotInMenuList.length > 0) {
@@ -221,4 +221,27 @@ export function sendEmailMessage(email, subject, htmlMessage, callback) {
     .catch((err) => {
       callback(400, err);
     });
+}
+
+export function summarizeOrderItems(items, callback) {
+  let total = 0;
+  let error = false;
+  for (const item of items) {
+    const itemName =
+      typeof item.name == "string" && item.name.length > 0 ? item.name : false;
+    const itemQty =
+      typeof item.qty == "number" && item.qty > 0 ? item.qty : false;
+    const itemPrice =
+      typeof item.price == "number" && item.price > 0 ? item.price : false;
+    if (itemName && itemQty && itemPrice) {
+      total += item.price * item.qty;
+    } else {
+      error = true;
+    }
+  }
+  if (error) {
+    callback(400, { Error: "missing or invalid data in items." });
+  } else {
+    callback(false, total);
+  }
 }

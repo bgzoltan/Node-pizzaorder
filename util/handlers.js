@@ -9,6 +9,7 @@ import {
   anyNotAvailableItems,
   isValidCard,
   sendEmailMessage,
+  summarizeOrderItems,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -418,7 +419,14 @@ handlers.shoppingcart = (data, callback) => {
 };
 
 // CREATE SHOPPING CART
-// {email: user's email,items:array of pizza names, date: timestamp}
+// interface:
+// {
+// email: string,
+// items: [{name: string
+//         qty: number
+//         price: number
+//         }],
+// }
 handlers._shoppingcart.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
@@ -434,55 +442,67 @@ handlers._shoppingcart.post = (data, callback) => {
           const items =
             typeof shoppingCart.items == "object" &&
             shoppingCart.items instanceof Array &&
-            shoppingCart.items.length > 0;
+            shoppingCart.items.length > 0
+              ? shoppingCart.items
+              : false;
           const shoppingCartDate = parseInt(Date.now());
-          const modifiedShoppingCart = {
-            ...shoppingCart,
-            orderDate: shoppingCartDate,
-          };
-          if (items) {
-            // Check if shopping cart already exists
-            dataUtil.read(
-              "shopping-carts",
-              shoppingCart.email,
-              (err, shoppingCartData) => {
-                if (!err && shoppingCartData) {
-                  callback(405, {
-                    Error:
-                      "shopping card already exists, you can modify or delete it.",
-                  });
-                } else {
-                  // Check the orderable items.
-                  anyNotAvailableItems(
-                    shoppingCart,
-                    (err, notAvailableItems) => {
-                      if (err) {
-                        callback(400, {
-                          Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
-                        });
-                      } else {
-                        // Create shopping cart
-                        dataUtil.create(
-                          "shopping-carts",
-                          shoppingCart.email,
-                          modifiedShoppingCart,
-                          (err) => {
-                            if (!err) {
-                              callback(200, modifiedShoppingCart);
-                            } else {
-                              callback(400, { Error: err });
-                            }
+
+          // Summarize item prices
+          summarizeOrderItems(items, (err, totalData) => {
+            if (err) {
+              callback(err, totalData);
+            } else {
+              // Extending with total price and order date
+              const modifiedShoppingCart = {
+                ...shoppingCart,
+                totalPrice: totalData,
+                date: shoppingCartDate,
+              };
+              if (items) {
+                // Check if shopping cart already exists
+                dataUtil.read(
+                  "shopping-carts",
+                  shoppingCart.email,
+                  (err, shoppingCartData) => {
+                    if (!err && shoppingCartData) {
+                      callback(405, {
+                        Error:
+                          "shopping card already exists, you can modify or delete it.",
+                      });
+                    } else {
+                      // Check the orderable items.
+                      anyNotAvailableItems(
+                        shoppingCart,
+                        (err, notAvailableItems) => {
+                          if (err) {
+                            callback(400, {
+                              Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
+                            });
+                          } else {
+                            // Create shopping cart
+                            dataUtil.create(
+                              "shopping-carts",
+                              shoppingCart.email,
+                              modifiedShoppingCart,
+                              (err) => {
+                                if (!err) {
+                                  callback(200, modifiedShoppingCart);
+                                } else {
+                                  callback(400, { Error: err });
+                                }
+                              }
+                            );
                           }
-                        );
-                      }
+                        }
+                      );
                     }
-                  );
-                }
+                  }
+                );
+              } else {
+                callback(400, { Error: "missing shopping cart items." });
               }
-            );
-          } else {
-            callback(400, { Error: "missing shopping cart items." });
-          }
+            }
+          });
         } else {
           callback(400, { Error: err });
         }
@@ -511,54 +531,63 @@ handlers._shoppingcart.put = (data, callback) => {
           const items =
             typeof shoppingCart.items == "object" &&
             shoppingCart.items instanceof Array &&
-            shoppingCart.items.length > 0;
-          const shoppingCartModificationDate = parseInt(Date.now());
-          const modifiedShoppingCart = {
-            ...shoppingCart,
-            date: shoppingCartModificationDate,
-          };
-          if (items) {
-            // Check if shopping cart already exists
-            dataUtil.read(
-              "shopping-carts",
-              shoppingCart.email,
-              (err, shoppingCartData) => {
-                if (!err && shoppingCartData) {
-                  // Check the orderable items.
-                  anyNotAvailableItems(
-                    shoppingCart,
-                    (err, notAvailableItems) => {
-                      if (err) {
-                        callback(400, {
-                          Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
-                        });
-                      } else {
-                        // Modify shopping cart
-                        dataUtil.update(
-                          "shopping-carts",
-                          shoppingCart.email,
-                          modifiedShoppingCart,
-                          (err) => {
-                            if (!err) {
-                              callback(200, modifiedShoppingCart);
-                            } else {
-                              callback(400, { Error: err });
-                            }
+            shoppingCart.items.length > 0
+              ? shoppingCart.items
+              : false;
+          summarizeOrderItems(items, (err, totalData) => {
+            if (err) {
+              callback(err, totalData);
+            } else {
+              const shoppingCartModificationDate = parseInt(Date.now());
+              const modifiedShoppingCart = {
+                ...shoppingCart,
+                totalPrice: totalData,
+                date: shoppingCartModificationDate,
+              };
+              if (items) {
+                // Check if shopping cart already exists
+                dataUtil.read(
+                  "shopping-carts",
+                  shoppingCart.email,
+                  (err, shoppingCartData) => {
+                    if (!err && shoppingCartData) {
+                      // Check the orderable items.
+                      anyNotAvailableItems(
+                        shoppingCart,
+                        (err, notAvailableItems) => {
+                          if (err) {
+                            callback(400, {
+                              Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
+                            });
+                          } else {
+                            // Modify shopping cart
+                            dataUtil.update(
+                              "shopping-carts",
+                              shoppingCart.email,
+                              modifiedShoppingCart,
+                              (err) => {
+                                if (!err) {
+                                  callback(200, modifiedShoppingCart);
+                                } else {
+                                  callback(400, { Error: err });
+                                }
+                              }
+                            );
                           }
-                        );
-                      }
+                        }
+                      );
+                    } else {
+                      callback(405, {
+                        Error: "shopping card does not exists.",
+                      });
                     }
-                  );
-                } else {
-                  callback(405, {
-                    Error: "shopping card does not exists.",
-                  });
-                }
+                  }
+                );
+              } else {
+                callback(400, { Error: "missing shopping cart items." });
               }
-            );
-          } else {
-            callback(400, { Error: "missing shopping cart items." });
-          }
+            }
+          });
         } else {
           callback(400, { Error: err });
         }
