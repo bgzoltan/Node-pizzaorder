@@ -104,3 +104,16 @@ dataUtil.update = (dir, fileName, data, callback) => {
     }
   });
 };
+
+dataUtil.move = (dirFrom, dirTo, fileName, callback) => {
+  const source = `${dataUtil.baseDir}/${dirFrom}/${fileName}.json`;
+  const destination = `${dataUtil.baseDir}/${dirTo}/${fileName}.json`;
+
+  fs.rename(source, destination, (err) => {
+    if (!err) {
+      callback(false);
+    } else {
+      callback("error during file moving.");
+    }
+  });
+};

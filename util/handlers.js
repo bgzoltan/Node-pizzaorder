@@ -719,9 +719,23 @@ handlers.order = (data, callback) => {
                           htmlMessage,
                           (err, data) => {
                             if (!err && data) {
-                              callback(200, {
-                                Success: paymentDetails,
-                              });
+                              // Moving shopping cart to orders folder to get the get the current orders later
+                              dataUtil.move(
+                                "shopping-carts",
+                                "orders",
+                                email,
+                                (err) => {
+                                  if (!err) {
+                                    callback(200, {
+                                      Success: paymentDetails,
+                                    });
+                                  } else {
+                                    callback(400, {
+                                      Error: "creating order file: " + err,
+                                    });
+                                  }
+                                }
+                              );
                             } else {
                               callback(200, { Error: data });
                             }
@@ -747,9 +761,10 @@ handlers.order = (data, callback) => {
             });
           }
         } else {
-          callback(400, {
-            Error: "shopping cart is empty or something went wrong: ",
-            err,
+          callback(err, {
+            Error:
+              "shopping cart is empty or something went wrong: " +
+              shoppingCartData["Error"],
           });
         }
       });
