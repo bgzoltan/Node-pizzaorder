@@ -247,7 +247,7 @@ handlers._tokens.post = (data, callback) => {
                       const tokenObject = {
                         id: tokenId,
                         email,
-                        expires: Date.now() + 1000 * 60 * 60,
+                        expires: Date.now() + 1000 * 30,
                       };
                       dataUtil.create(
                         "tokens",

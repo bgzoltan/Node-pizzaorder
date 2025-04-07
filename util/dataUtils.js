@@ -117,3 +117,40 @@ dataUtil.move = (dirFrom, dirTo, fileName, callback) => {
     }
   });
 };
+
+// Reading files
+dataUtil.readFiles = (dir, callback) => {
+  const directory = `${dataUtil.baseDir}/${dir}`;
+
+  fs.readdir(directory, (err, files) => {
+    if (!err && files) {
+      callback(false, files);
+    } else {
+      callback(400, { Error: "error reading the directory." });
+    }
+  });
+
+  // const file = `${dataUtil.baseDir}/${dir}/${fileName}.json`;
+  // fs.open(file, "r", (err, fileDescriptor) => {
+  //   if (!err) {
+  //     const buffer = Buffer.alloc(1024); // Allocate buffer for raw data
+  //     fs.read(fileDescriptor, buffer, 0, buffer.length, 0, (err, userData) => {
+  //       if (!err) {
+  //         const dataString = buffer.toString("utf8", 0, userData); // decoding buffer data to string format
+  //         const data = JSON.parse(dataString);
+  //         fs.close(fileDescriptor, (err) => {
+  //           if (!err) {
+  //             callback(false, data);
+  //           } else {
+  //             callback(400, { Error: "could not close the file." });
+  //           }
+  //         });
+  //       } else {
+  //         callback(400, { Error: "could not read the file." });
+  //       }
+  //     });
+  //   } else {
+  //     callback(404, { Error: "the file does not exist." });
+  //   }
+  // });
+};

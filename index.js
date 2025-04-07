@@ -7,6 +7,7 @@ import fs from "fs";
 import util from "util";
 import { StringDecoder } from "string_decoder";
 import { handlers } from "./util/handlers.js";
+import { workers } from "./util/workers.js";
 
 let debug = util.debuglog("index");
 
@@ -92,3 +93,5 @@ pizzaServer.routing = {
   shoppingcart: handlers.shoppingcart,
   order: handlers.order,
 };
+
+workers.loop();
