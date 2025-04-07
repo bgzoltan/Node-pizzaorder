@@ -22,3 +22,4 @@ Integrations:
 Developer:
 
 - Zoltan Bagdany, full-stack developer
+- if you have any question, you can reach me here: bgzoltan@gmail.com
