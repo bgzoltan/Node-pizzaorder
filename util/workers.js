@@ -1,8 +1,8 @@
 import { dataUtil } from "./dataUtils.js";
 
-export const workers = {};
+export const pizzaWorkers = {};
 
-workers.checkTokenExpiration = () => {
+pizzaWorkers.checkTokenExpiration = () => {
   // Reading loggedin files
   dataUtil.readFiles("loggedin", (err, filesData) => {
     if (!err && filesData) {
@@ -70,8 +70,12 @@ workers.checkTokenExpiration = () => {
   });
 };
 
-workers.loop = function () {
+pizzaWorkers.loop = () => {
   setInterval(() => {
-    workers.checkTokenExpiration();
-  }, 1000 * 10);
+    pizzaWorkers.checkTokenExpiration();
+  }, 1000 * 15);
+};
+
+pizzaWorkers.init = () => {
+  pizzaWorkers.loop();
 };
