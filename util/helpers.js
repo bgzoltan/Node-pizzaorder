@@ -5,6 +5,12 @@ import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
 import FormData from "form-data";
 import Mailgun from "mailgun.js"; // Email integration
+import fs from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dataUtil.baseDir = path.join(__dirname, ".././data");
 dotenv.config();
 
 export function isValidPassword(password) {
@@ -284,4 +290,21 @@ export function formatMessage(shoppingCartData, paymentDetails, modifiedCard) {
   <p>Total price: ${shoppingCartData.totalPrice}</p>
   <p>Thanks,<br>Happy Pizza</p>
 `;
+}
+
+export function getTemplate(templateName, callback) {
+  templateName = typeof templateName == "string" ? templateName : false;
+  const file = `${dataUtil.baseDir}/templates/${templateName}.html`;
+  console.log("FILE", file);
+  if (templateName) {
+    fs.readFile(file, "utf-8", (err, fileData) => {
+      if (!err && fileData) {
+        callback(false, fileData);
+      } else {
+        callback(400, { Error: "readinf template file." });
+      }
+    });
+  } else {
+    callback("Missing template data or invalid data.");
+  }
 }

@@ -15,8 +15,8 @@ export const __dirname = path.dirname(__filename);
 // To provide ssl support must to create cert and key files:
 // openssl req -newkey rsa:2048 -new -nodes -x509 -days 365 -keyout key.pem -out cert.pem
 pizzaServer.httpsParams = {
-  cert: fs.readFileSync(path.join(__dirname, "../https/cert.pem")),
-  key: fs.readFileSync(path.join(__dirname, "../https/key.pem")),
+  cert: fs.readFileSync(path.join(__dirname, "../https/localhost.pem")),
+  key: fs.readFileSync(path.join(__dirname, "../https/localhost-key.pem")),
   minVersion: "TLSv1.2", // Ensure at least TLS 1.2
 };
 
@@ -55,12 +55,21 @@ pizzaServer.unifiedServer = (req, res) => {
         ? pizzaServer.routing[trimmedPath]
         : false;
 
-    const handlerCallback = (statusCode, payload) => {
+    const handlerCallback = (statusCode, payload, contenttype = "json") => {
       try {
         statusCode = typeof statusCode == "number" ? statusCode : 200;
-        payload = typeof payload == "object" ? payload : {};
-        const payloadString = JSON.stringify(payload);
-        const headers = { "content-type": "application/json" };
+
+        let payloadString = "";
+        if (contenttype == "json") {
+          const headers = { "Content-Type": "application/json" };
+          payload = typeof payload == "object" ? payload : {};
+          payloadString = JSON.stringify(payload);
+        } else {
+          const headers = { "Content-Type": "text/html" };
+          payload = typeof payload === "string" ? payload : "";
+          payloadString = payload;
+        }
+
         res.writeHead(statusCode, headers);
         res.end(payloadString);
       } catch (error) {
@@ -79,11 +88,17 @@ pizzaServer.unifiedServer = (req, res) => {
 };
 
 pizzaServer.routing = {
-  users: handlers.users,
-  tokens: handlers.tokens,
-  pizzamenu: handlers.pizzamenu,
-  shoppingcart: handlers.shoppingcart,
-  order: handlers.order,
+  "": handlers.index,
+  "account/create": handlers.accountCreate,
+  "account/edit:": handlers.accountEdit,
+  "account/deleted": handlers.accountDelete,
+  "account/session/create": handlers.sessionCreate,
+  "account/session/deleted": handlers.sessionDeleted,
+  "api/users": handlers.users,
+  "api/tokens": handlers.tokens,
+  "api/pizzamenu": handlers.pizzamenu,
+  "api/shoppingcart": handlers.shoppingcart,
+  "api/order": handlers.order,
 };
 
 pizzaServer.init = () => {

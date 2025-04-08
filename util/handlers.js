@@ -11,6 +11,7 @@ import {
   sendEmailMessage,
   summarizeOrderItems,
   formatMessage,
+  getTemplate,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -27,6 +28,25 @@ export const handlers = {};
 
 // USERS HANDLERS *****************
 handlers._users = {};
+
+// HANDLERS FOR HTML **************
+
+handlers.index = (data, callback) => {
+  if (data.method == "get") {
+    getTemplate("index", (err, templateData) => {
+      console.log("TEMPLATE *********", templateData);
+      if (!err && templateData) {
+        callback(200, templateData, "html");
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
+// HANBDLERS FOR JSON
 
 // CREATE USER
 // sample user payload in json:
