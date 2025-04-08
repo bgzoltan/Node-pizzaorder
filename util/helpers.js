@@ -8,6 +8,7 @@ import Mailgun from "mailgun.js"; // Email integration
 import fs from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
+import { globalVariables } from "./config.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dataUtil.baseDir = path.join(__dirname, ".././data");
@@ -292,19 +293,62 @@ export function formatMessage(shoppingCartData, paymentDetails, modifiedCard) {
 `;
 }
 
-export function getTemplate(templateName, callback) {
+export function getTemplate(templateName, templateVariables, callback) {
   templateName = typeof templateName == "string" ? templateName : false;
-  const file = `${dataUtil.baseDir}/templates/${templateName}.html`;
-  console.log("FILE", file);
+  const templateFile = `${dataUtil.baseDir}/templates/${templateName}.html`;
+  templateVariables=typeof templateVariables=='object' && templateVariables!==null ? templateVariables:false;
   if (templateName) {
-    fs.readFile(file, "utf-8", (err, fileData) => {
-      if (!err && fileData) {
-        callback(false, fileData);
+    fs.readFile(templateFile, "utf-8", (err, templateFileData) => {
+      if (!err && templateFileData && templateFileData.length>0) {
+        // Extend the html file dynamically with global and template variables
+        const updatedTemplateFileData=interpolate(templateFileData,templateVariables)
+        callback(false, updatedTemplateFileData);
       } else {
-        callback(400, { Error: "readinf template file." });
+        callback(400, { Error: "error when reading template file." });
       }
     });
   } else {
     callback("Missing template data or invalid data.");
   }
 }
+
+export function interpolate (templateFileData,templateVariables){
+  templateFileData= typeof templateFileData == 'string' && templateFileData.length > 0 ? templateFileData : '';
+  templateVariables = typeof(templateVariables) == 'object' && templateVariables !== null ? templateVariables : {};
+
+  // Add the globalVariables.templateGlobals to the page specific templateVariables, prepending their key name with "global."
+  for(var keyName in globalVariables.templateGlobals){
+     if(globalVariables.templateGlobals.hasOwnProperty(keyName)){
+       templateVariables['global.'+keyName] = globalVariables.templateGlobals[keyName]
+     }
+  }
+  // For each key in the data object, insert its value into the string at the corresponding placeholder
+  for(var key in templateVariables){
+     if(templateVariables.hasOwnProperty(key) && typeof(templateVariables[key] == 'string')){
+        var replace = templateVariables[key];
+        var find = '{'+key+'}';
+        templateFileData = templateFileData.replace(find,replace);
+     }
+  }
+  return templateFileData;
+};
+
+export function addUniversalTemplates (templateData,templateVariables,callback){
+  templateData = typeof(templateData) == 'string' && templateData.length > 0 ? templateData : '';
+  templateVariables = typeof(templateVariables) == 'object' && templateVariables!== null ? templateVariables : {};
+  getTemplate('_header',templateVariables,function(err,headerString){
+    if(!err && headerString){
+      getTemplate('_footer',templateVariables,function(err,footerString){
+        if(!err && headerString){
+          // Add header and footer to page
+          var fullString = headerString+templateData+footerString;
+          callback(false,fullString);
+        } else {
+          callback('Could not find the footer template');
+        }
+      });
+    } else {
+      callback('Could not find the header template');
+    }
+  });
+};

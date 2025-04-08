@@ -12,6 +12,7 @@ import {
   summarizeOrderItems,
   formatMessage,
   getTemplate,
+  addUniversalTemplates
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -32,11 +33,25 @@ handlers._users = {};
 // HANDLERS FOR HTML **************
 
 handlers.index = (data, callback) => {
+  // Index page specific variables
+  const templateVariables = {
+    'head.title' : 'Pizza Order Application',
+    'head.description' : 'Order your favourite pizzaa 0-24h on the Gold Coast',
+    'body.class' : 'index',
+    'index.title' : 'Gold Coast - 0-24h Pizza Order'
+  };
   if (data.method == "get") {
-    getTemplate("index", (err, templateData) => {
-      console.log("TEMPLATE *********", templateData);
+    getTemplate("index", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        callback(200, templateData, "html");
+        // Add the universal header and footer
+        addUniversalTemplates(templateData,templateVariables,function(err,str){
+          if(!err && str){
+            // Return that page as HTML
+            callback(200,str,'html');
+          } else {
+            callback(500,undefined,'html');
+          }
+        });
       } else {
         callback(500, undefined, "html");
       }
