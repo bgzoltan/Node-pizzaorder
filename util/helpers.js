@@ -11,7 +11,7 @@ import path from "path";
 import { globalVariables } from "./config.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dataUtil.baseDir = path.join(__dirname, ".././data");
+const baseDir = path.join(__dirname, "../");
 dotenv.config();
 
 export function isValidPassword(password) {
@@ -294,8 +294,10 @@ export function formatMessage(shoppingCartData, paymentDetails, modifiedCard) {
 }
 
 export function getTemplate(templateName, templateVariables, callback) {
+
   templateName = typeof templateName == "string" ? templateName : false;
-  const templateFile = `${dataUtil.baseDir}/templates/${templateName}.html`;
+  const templateFile = `${baseDir}/data/templates/${templateName}.html`;
+  console.log('GET TEMPLATE************',templateFile)
   templateVariables=typeof templateVariables=='object' && templateVariables!==null ? templateVariables:false;
   if (templateName) {
     fs.readFile(templateFile, "utf-8", (err, templateFileData) => {
@@ -352,3 +354,18 @@ export function addUniversalTemplates (templateData,templateVariables,callback){
     }
   });
 };
+
+export function getStaticAsset(assetFileName,callback){
+  assetFileName=typeof(assetFileName=='string') && assetFileName.length>0 ? assetFileName:false;
+  if (assetFileName) {  
+    const assetFile=`${baseDir}/public/${assetFileName}`;
+    fs.readFile(assetFile,(err,fileData)=>{
+    if(!err && fileData) {
+      callback(false,fileData)
+    } else{
+      callback(404,{Error:'asset file is not found.'})
+    }
+  })} else {
+    callback(400,{Error:'asset file name is missing.'})
+  }
+}

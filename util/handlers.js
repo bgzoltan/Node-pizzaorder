@@ -12,11 +12,13 @@ import {
   summarizeOrderItems,
   formatMessage,
   getTemplate,
-  addUniversalTemplates
+  addUniversalTemplates,
+  getStaticAsset
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
 import Stripe from "stripe";
+
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -33,6 +35,7 @@ handlers._users = {};
 // HANDLERS FOR HTML **************
 
 handlers.index = (data, callback) => {
+  console.log('INDEX************')
   // Index page specific variables
   const templateVariables = {
     'head.title' : 'Pizza Order Application',
@@ -60,6 +63,28 @@ handlers.index = (data, callback) => {
     callback(405, { Error: "method is not allowed." });
   }
 };
+
+handlers.public=(data,callback)=>{
+
+  if(data) {
+    const {method}=data
+    if (method=='get') {
+        const assetFileName=data.pathName.replace("/public/",'')
+        getStaticAsset(assetFileName, (err,assetData)=>{
+          if(!err && assetData) {
+            const contentType=data.trimmedPath.split(".").pop()
+            callback(200,assetData,contentType)
+          } else{
+            callback(err,{Error:assetData['Error']})
+          }
+        })
+    } else{
+      callback(405,{Error:'This method is not allowed.'})
+    }
+  } else {
+    callback(400,'Missing data.')
+  }
+}
 
 // HANBDLERS FOR JSON
 

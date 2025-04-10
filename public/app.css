@@ -1,0 +1,14 @@
+body {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  color: red;
+}
+
+#menu {
+  display: flex;
+  justify-content: center; 
+  gap:20px;
+  padding:5px;
+  background-color:  lightcoral;
+}
