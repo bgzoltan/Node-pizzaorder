@@ -13,7 +13,6 @@ const app={};
 app.config={
     sessionToken:false
 };
-
 app.client={};
 
 app.client.request=(headers,path,method,queryStringObject,payload,callback)=>{
@@ -23,7 +22,6 @@ app.client.request=(headers,path,method,queryStringObject,payload,callback)=>{
     queryStringObject=typeof queryStringObject=='object' && queryStringObject!==null ? queryStringObject:{};
     payload=typeof payload=='object' && payload!==null ? payload:{};
     callback=typeof callback=='function' ? callback:false;
-
     const requestUrl=path+'?';
     const counter=0;
     // Extending requestUrl with query keys and values
@@ -57,19 +55,22 @@ app.client.request=(headers,path,method,queryStringObject,payload,callback)=>{
 
     // Handle the response if the request has done
     xhr.onreadystatechange=()=>{
-        if(xhr.readyState=XMLHttpRequest.DONE){
-            const statusCode=xhr.status;
-            const responseReturned=xhr.responseText;
+        if(xhr.readyState=='3' || xhr.readyState=='4'){ // 3=Response loading, 4=Response done
+            if (xhr.readyState=='3' ) { // Not to overwrite the the status 
+              const statusCode=xhr.status;
+              const statusText=xhr.statusText
+              const responseReturned=xhr.responseText;
 
-            // Callback (if there is a callback)
-            if(callback) {
-                try {
-                    // E/O json it will create an error
-                    const parsedResponse=JSON.parse(responseReturned);
-                    callback(statusCode,parsedResponse);
-                } catch (err) {
-                    callback(statusCode,false);
-                }
+              // Callback (if there is a callback)
+              if(callback) {
+                  try {
+                      // W/O json it will create an error
+                      const parsedResponse=JSON.parse(responseReturned);
+                      callback(statusCode,parsedResponse);
+                  } catch (err) {
+                      callback(statusCode,statusText);
+                  }
+              }
             }
         }
     }
@@ -106,7 +107,7 @@ app.bindForms = function(){
       // Call the appropriate API
       app.client.request(undefined,path,method,undefined,payload,function(statusCode,responsePayload){
         // Display an error on the form if needed
-        if(statusCode !== 200){
+        if(statusCode !== 200 && statusCode!==201){
   
           // Try to get the error from the api, or set a default error message
           var error = typeof(responsePayload.Error) == 'string' ? responsePayload.Error : 'Error during API request.';

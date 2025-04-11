@@ -141,7 +141,13 @@ handlers._users.post = (data, callback) => {
         "users",
         user.email,
         { ...user, password: hashedPassword },
-        callback
+        (err,data)=>{
+          if(!err && data) {
+            callback(201,data)
+          }else{
+            callback(err,data)
+          }
+        }
       );
     } else {
       callback(400, { Error: "missing or invalid data." });
