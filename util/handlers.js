@@ -35,7 +35,6 @@ handlers._users = {};
 // HANDLERS FOR HTML **************
 
 handlers.index = (data, callback) => {
-  console.log('INDEX************')
   // Index page specific variables
   const templateVariables = {
     'head.title' : 'Pizza Order Application',

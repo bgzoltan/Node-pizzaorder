@@ -6,35 +6,33 @@
     <title>{head.title} | {global.appName}</title>
     <meta name="description" content="{head.description}" />
     <link type="image/x-icon" rel="icon" href="public/pizza.ico" />
-    <script type="text/javascript" charset="utf-8" src="public/app.js"></script>
     <link rel="stylesheet" type="text/css" href="public/app.css" />
   </head>
   <body class="{body.class}">
      
-    <div class="wrapper">
-      <div id="menuWrapper">
+    <main class="wrapperVertical" style="flex:1">
+      <section class="wrapperHorizontal" >
         <a class="logo" href="/">
           <img src="public/logo.png"alt="Logo" width="70" height="70" />
         </a>
-        <div style="width: 100%;">
+        <navigation style="width:100%;">
           <ul  id="menu">
-            <li>
-              <a class='link' href="/">Home</a>
+            <li class='menuLink' >
+              <a  href="/">Home</a>
             </li>
-            <li >
-              <a class='link' href="/account/create">Signup</a>
+            <li class='menuLink' >
+              <a href="/account/create">Signup</a>
             </li>
-            <li >
-              <a class='link' href="/login">Login</a>
+            <li class='menuLink' >
+              <a  href="/account/login">Login</a>
             </li>
-            <li >
-              <a class='link' href="/account/edit">Account Settings</a>
+            <li class='menuLink' >
+              <a  href="/account/edit">Account Settings</a>
             </li>
-            <li >
-              <a class='link' href="#">Logout</a>
+            <li class='menuLink' >
+              <a  href="/account/logout">Logout</a>
             </li>
           </ul>
-        </div>
-        
-      </div>
+        </navigation>
+      </section>
 

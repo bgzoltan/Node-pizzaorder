@@ -1,3 +1,14 @@
+const menuLinksH = document.querySelectorAll(".menuLink a");
+const currentPath = window.location.pathname;
+  console.log('Currenth path',document,currentPath, typeof menuLinksH,menuLinksH)
+
+Array.from(menuLinksH).forEach(link => {
+    console.log('Link ****', link );
+    if (link.getAttribute("href") === currentPath) {
+      link.classList.add("active");
+    }
+});
+
 // Frontend app. container
 const app={};
 

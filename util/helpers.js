@@ -297,7 +297,6 @@ export function getTemplate(templateName, templateVariables, callback) {
 
   templateName = typeof templateName == "string" ? templateName : false;
   const templateFile = `${baseDir}/data/templates/${templateName}.html`;
-  console.log('GET TEMPLATE************',templateFile)
   templateVariables=typeof templateVariables=='object' && templateVariables!==null ? templateVariables:false;
   if (templateName) {
     fs.readFile(templateFile, "utf-8", (err, templateFileData) => {
