@@ -1,9 +1,7 @@
 const menuLinksH = document.querySelectorAll(".menuLink a");
 const currentPath = window.location.pathname;
-  console.log('Currenth path',document,currentPath, typeof menuLinksH,menuLinksH)
 
 Array.from(menuLinksH).forEach(link => {
-    console.log('Link ****', link );
     if (link.getAttribute("href") === currentPath) {
       link.classList.add("active");
     }
@@ -81,6 +79,70 @@ app.client.request=(headers,path,method,queryStringObject,payload,callback)=>{
     // Sending the request as we set up before
     xhr.send(payloadString)
 };
+
+// Bind the forms
+app.bindForms = function(){
+    document.querySelector("form").addEventListener("submit", function(e){
+  
+      // Stop it from submitting
+      e.preventDefault();
+      const formId = this.id;
+      const path = this.action;
+      const method = this.method.toUpperCase();
+  
+      // Hide the error message (if it's currently shown due to a previous error)
+      document.querySelector("#"+formId+" .formError").style.display = 'hidden';
+  
+      // Turn the inputs into a payload
+      let payload = {};
+      const elements = this.elements; // Selecting the form controll elements
+      for(let i = 0; i < elements.length; i++){
+        if(elements[i].type !== 'submit'){
+          let valueOfElement = elements[i].type == 'checkbox' ? elements[i].checked : elements[i].value;
+          payload[elements[i].name] = valueOfElement;
+        }
+      }
+  
+      // Call the appropriate API
+      app.client.request(undefined,path,method,undefined,payload,function(statusCode,responsePayload){
+        // Display an error on the form if needed
+        if(statusCode !== 200){
+  
+          // Try to get the error from the api, or set a default error message
+          var error = typeof(responsePayload.Error) == 'string' ? responsePayload.Error : 'Error during API request.';
+  
+          // Set the formError field with the error text
+          document.querySelector("#"+formId+" .formError").innerHTML = error;
+          document.querySelector("#"+formId+" .formError").style.display = 'block';
+  
+        } else {
+          // If successful, send to form response processor
+          app.formResponseProcessor(formId,payload,responsePayload);
+        }
+  
+      });
+    });
+  };
+
+// Form response processor
+app.formResponseProcessor = function(formId,requestPayload,responsePayload){
+    var functionToCall = false;
+    if(formId == 'accountCreate'){
+        console.log('Account submitted...')
+      // @TODO Login the user
+    }
+  };
+  
+  // Init (bootstrapping)
+  app.init = function(){
+    // Bind all form submissions
+    app.bindForms();
+  };
+  
+  // Call the init processes after the window loads
+  window.onload = function(){
+    app.init();
+  };
 
 
 

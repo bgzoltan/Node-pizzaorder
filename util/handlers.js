@@ -63,6 +63,36 @@ handlers.index = (data, callback) => {
   }
 };
 
+handlers.accountCreate = (data, callback) => {
+  // Index page specific variables
+  const templateVariables = {
+    'head.title' : 'Create Account',
+    'head.description' : 'Signup is very easy',
+    'body.class' : 'accountCreate',
+    'accountCreate.title' : 'Sign Up - Create Your Account'
+  };
+
+  if (data.method == "get") {
+    getTemplate("accountCreate", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(templateData,templateVariables,function(err,str){
+          if(!err && str){
+            // Return that page as HTML
+            callback(200,str,'html');
+          } else {
+            callback(500,undefined,'html');
+          }
+        });
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
 handlers.public=(data,callback)=>{
 
   if(data) {
