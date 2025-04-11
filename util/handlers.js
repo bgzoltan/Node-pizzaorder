@@ -41,7 +41,7 @@ handlers.index = (data, callback) => {
     'head.title' : 'Pizza Order Application',
     'head.description' : 'Order your favourite pizzaa 0-24h on the Gold Coast',
     'body.class' : 'index',
-    'index.title' : 'Gold Coast - 0-24h Pizza Order'
+    'index.title' : 'Pizza House Gold Coast'
   };
   if (data.method == "get") {
     getTemplate("index", templateVariables, (err, templateData) => {

@@ -67,10 +67,8 @@ pizzaServer.unifiedServer = (req, res) => {
         ? pizzaServer.routing[trimmedPath]
         : false;
       }
-   
     
     
-    console.log('ROUTER........',selectedRouter)
     const handlerCallback = (statusCode, payload, contentType = "json") => {
       try {
         statusCode = typeof statusCode == "number" ? statusCode : 200;
