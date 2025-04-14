@@ -62,6 +62,7 @@ p {
 
 
 .menuLink a {
+  cursor: pointer;
   color: beige;
   font-weight: 300;
   text-decoration: none;
@@ -168,9 +169,15 @@ p {
 input {
   border-width: 1px;
   border-radius: 2px;
+  padding: 2px;
 }
 
 .inputLabel{
   padding: 0 0 5px 0;
   color: beige;
+}
+
+.showHide {
+  color: black;
+  visibility: hidden;
 }

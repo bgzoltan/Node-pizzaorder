@@ -17,7 +17,7 @@ dataUtil.create = (dir, fileName, data, callback) => {
         if (!err) {
           fs.close(fileDescriptor, (err) => {
             if (!err) {
-              callback(false, { Success: "data is created." });
+              callback(false, data);
             } else {
               callback(400, { Error: "could not close the file." });
             }

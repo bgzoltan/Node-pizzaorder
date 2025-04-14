@@ -1,0 +1,25 @@
+<div class="content" >
+    <div class="contentUpper">
+      <h1>{login.title}</h1>
+      <p>Welcome to your login page!</p>
+    </div>
+  <div class="contentCenter">
+      <div class="modal">
+        <form  class="wrapperVertical" id="login" action="/api/tokens" method="POST">
+            <div class="formError"></div>
+            <div class="signupContainer">
+                <div class="inputLabel">email</div>
+                <input type="text" name="email" placeholder="john.smith@gmail.com" />
+                <div class="inputLabel">Your Password</div>
+                <input type="password" name="password" placeholder="Type in your password!" />
+            </div>
+            <!-- <div class="wrapperHorizontal" style="padding:1rem">
+                <div class="inputLabel" style="padding:0rem 1rem 0rem 0rem">Do you agree to the terms and conditions? </div>
+                <input  type="checkbox" name="tosAgreement" value="agree">
+            </div> -->
+            <button type="submit" class="buttonFirst">Get Started</button>
+        </form>
+      </div>
+  </div>
+</div>
+</main>

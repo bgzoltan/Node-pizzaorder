@@ -73,44 +73,43 @@ pizzaServer.unifiedServer = (req, res) => {
       try {
         statusCode = typeof statusCode == "number" ? statusCode : 200;
 
-        let payloadString = "";
+       let payloadString = "";
+       let headers = { "Content-Type": "application/json" };
 
         if (contentType == "json") {
-          const headers = { "Content-Type": "application/json" };
           payload = typeof payload == "object" ? payload : {};
           payloadString = JSON.stringify(payload);
         } 
         if (contentType=='html') {
-          const headers = { "Content-Type": "text/html" };
+          headers = { "Content-Type": "text/html" };
           payload = typeof payload === "string" ? payload : "";
           payloadString = payload;
         }
         if (contentType=='js') {
-          const headers = { "Content-Type": "text/javascript" };
+          headers = { "Content-Type": "text/javascript" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
         if (contentType=='css') {
-          const headers = { "Content-Type": "text/css" };
+          headers = { "Content-Type": "text/css" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
         if (contentType=='jpeg') {
-          const headers = { "Content-Type": "image/jpeg" };
+          headers = { "Content-Type": "image/jpeg" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
         if (contentType=='png') {
-          const headers = { "Content-Type": "image/png" };
+          headers = { "Content-Type": "image/png" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
         if (contentType=='ico') {
-          const headers = { "Content-Type": "image/x-icon" };
+          headers = { "Content-Type": "image/x-icon" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
-
 
         res.writeHead(statusCode, headers);
         res.end(payloadString);
@@ -134,8 +133,8 @@ pizzaServer.routing = {
   "account/create": handlers.accountCreate,
   "account/edit:": handlers.accountEdit,
   "account/delete": handlers.accountDelete,
-  "account/login": handlers.sessionCreate,
-  "account/logout": handlers.sessionDeleted,
+  "account/login": handlers.login,
+  "account/logout": handlers.logout,
   "api/users": handlers.users,
   "api/tokens": handlers.tokens,
   "api/pizzamenu": handlers.pizzamenu,

@@ -115,6 +115,36 @@ handlers.public=(data,callback)=>{
   }
 }
 
+handlers.login = (data, callback) => {
+  // Login page specific variables
+  const templateVariables = {
+    'head.title' : 'Login',
+    'head.description' : 'Login is very easy',
+    'body.class' : 'login',
+    'login.title' : 'Log In to Your Account'
+  };
+
+  if (data.method == "get") {
+    getTemplate("login", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(templateData,templateVariables,function(err,str){
+          if(!err && str){
+            // Return that page as HTML
+            callback(200,str,'html');
+          } else {
+            callback(500,undefined,'html');
+          }
+        });
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
 // HANBDLERS FOR JSON
 
 // CREATE USER
@@ -350,9 +380,9 @@ handlers._tokens.post = (data, callback) => {
                         tokenObject,
                         (err, tokenData) => {
                           if (!err) {
-                            callback(false, {
-                              Success: "login was successfull.",
-                            });
+                            callback(false, 
+                            tokenData,'json'
+                            );
                           } else {
                             callback(err, {
                               Error:
