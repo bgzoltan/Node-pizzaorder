@@ -4,7 +4,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -37,29 +38,32 @@ p {
   padding: 1rem 0rem 0rem 0rem;
 }
 
+button a {
+  text-decoration: none;
+}
+
 .wrapperVertical {
   display: flex;
   flex-direction: column;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
 }
 
 .wrapperHorizontal {
   display: flex;
   flex-direction: row;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
 }
 
 #menu {
   display: flex;
-  justify-content: center; 
-  gap:20px;
-  padding:5px;
+  justify-content: center;
+  gap: 20px;
+  padding: 5px;
   color: beige;
-  background-color:  rgb(186, 55, 7);
+  background-color: rgb(186, 55, 7);
 }
-
 
 .menuLink a {
   cursor: pointer;
@@ -74,23 +78,23 @@ p {
 }
 
 .content {
-  display:flex;
+  display: flex;
   flex-direction: column;
   flex: 1;
 }
 
 .contentUpper {
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
 }
 
 .contentCenter {
-  display:flex;
-  justify-content:center; 
-  align-items:center;
-  flex:1
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
 }
 
 .modal {
@@ -100,7 +104,6 @@ p {
   color: beige;
   background-color: rgb(186, 55, 7);
   padding: 2rem;
-
 }
 
 .buttonFirst {
@@ -113,7 +116,7 @@ p {
   background-color: orange;
   color: black;
   text-decoration: none;
-  width:max-content;
+  width: max-content;
 }
 
 .buttonSecond {
@@ -130,16 +133,14 @@ p {
 
 .buttonRow {
   display: flex;
-
 }
-
 
 #footer {
   margin: 1rem;
 }
 
 /* Form Styling for Account Creation page and others */
-.formWrapper{
+.formWrapper {
   width: 100%;
   padding: 15px;
 }
@@ -151,8 +152,7 @@ p {
   /* padding: 10px; */
 }
 
-
-.formError{
+.formError {
   display: none;
   background-color: #c83737;
   font-style: italic;
@@ -172,7 +172,7 @@ input {
   padding: 2px;
 }
 
-.inputLabel{
+.inputLabel {
   padding: 0 0 5px 0;
   color: beige;
 }
@@ -180,4 +180,22 @@ input {
 .showHide {
   color: black;
   visibility: hidden;
+}
+
+#errorBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #c83737;
+  color: white;
+}
+
+#messageBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #e68b24;
+  color: white;
 }

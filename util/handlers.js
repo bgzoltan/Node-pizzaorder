@@ -13,12 +13,11 @@ import {
   formatMessage,
   getTemplate,
   addUniversalTemplates,
-  getStaticAsset
+  getStaticAsset,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
 import Stripe from "stripe";
-
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -32,28 +31,32 @@ export const handlers = {};
 // USERS HANDLERS *****************
 handlers._users = {};
 
-// HANDLERS FOR HTML **************
+// FRONTEND HANDLERS FOR HTML **************
 
 handlers.index = (data, callback) => {
   // Index page specific variables
   const templateVariables = {
-    'head.title' : 'Pizza Order Application',
-    'head.description' : 'Order your favourite pizzaa 0-24h on the Gold Coast',
-    'body.class' : 'index',
-    'index.title' : 'Pizza House Gold Coast'
+    "head.title": "Pizza Order Application",
+    "head.description": "Order your favourite pizzaa 0-24h on the Gold Coast",
+    "body.class": "index",
+    "index.title": "Pizza House Gold Coast",
   };
   if (data.method == "get") {
     getTemplate("index", templateVariables, (err, templateData) => {
       if (!err && templateData) {
         // Add the universal header and footer
-        addUniversalTemplates(templateData,templateVariables,function(err,str){
-          if(!err && str){
-            // Return that page as HTML
-            callback(200,str,'html');
-          } else {
-            callback(500,undefined,'html');
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
           }
-        });
+        );
       } else {
         callback(500, undefined, "html");
       }
@@ -66,24 +69,28 @@ handlers.index = (data, callback) => {
 handlers.accountCreate = (data, callback) => {
   // Index page specific variables
   const templateVariables = {
-    'head.title' : 'Create Account',
-    'head.description' : 'Signup is very easy',
-    'body.class' : 'accountCreate',
-    'accountCreate.title' : 'Sign Up - Create Your Account'
+    "head.title": "Create Account",
+    "head.description": "Signup is very easy",
+    "body.class": "accountCreate",
+    "accountCreate.title": "Sign Up - Create Your Account",
   };
 
   if (data.method == "get") {
     getTemplate("accountCreate", templateVariables, (err, templateData) => {
       if (!err && templateData) {
         // Add the universal header and footer
-        addUniversalTemplates(templateData,templateVariables,function(err,str){
-          if(!err && str){
-            // Return that page as HTML
-            callback(200,str,'html');
-          } else {
-            callback(500,undefined,'html');
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
           }
-        });
+        );
       } else {
         callback(500, undefined, "html");
       }
@@ -93,49 +100,85 @@ handlers.accountCreate = (data, callback) => {
   }
 };
 
-handlers.public=(data,callback)=>{
-
-  if(data) {
-    const {method}=data
-    if (method=='get') {
-        const assetFileName=data.pathName.replace("/public/",'')
-        getStaticAsset(assetFileName, (err,assetData)=>{
-          if(!err && assetData) {
-            const contentType=data.trimmedPath.split(".").pop()
-            callback(200,assetData,contentType)
-          } else{
-            callback(err,{Error:assetData['Error']})
-          }
-        })
-    } else{
-      callback(405,{Error:'This method is not allowed.'})
+handlers.public = (data, callback) => {
+  if (data) {
+    const { method } = data;
+    if (method == "get") {
+      const assetFileName = data.pathName.replace("/public/", "");
+      getStaticAsset(assetFileName, (err, assetData) => {
+        if (!err && assetData) {
+          const contentType = data.trimmedPath.split(".").pop();
+          callback(200, assetData, contentType);
+        } else {
+          callback(err, { Error: assetData["Error"] });
+        }
+      });
+    } else {
+      callback(405, { Error: "This method is not allowed." });
     }
   } else {
-    callback(400,'Missing data.')
+    callback(400, "Missing data.");
   }
-}
+};
 
 handlers.login = (data, callback) => {
   // Login page specific variables
   const templateVariables = {
-    'head.title' : 'Login',
-    'head.description' : 'Login is very easy',
-    'body.class' : 'login',
-    'login.title' : 'Log In to Your Account'
+    "head.title": "Login",
+    "head.description": "Login is very easy",
+    "body.class": "login",
+    "login.title": "Log In to Your Account",
   };
 
   if (data.method == "get") {
     getTemplate("login", templateVariables, (err, templateData) => {
       if (!err && templateData) {
         // Add the universal header and footer
-        addUniversalTemplates(templateData,templateVariables,function(err,str){
-          if(!err && str){
-            // Return that page as HTML
-            callback(200,str,'html');
-          } else {
-            callback(500,undefined,'html');
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
           }
-        });
+        );
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
+handlers.logout = (data, callback) => {
+  // Login page specific variables
+  const templateVariables = {
+    "logout.title": "Log Out Page",
+    "logout.description": "Logout page",
+    "body.class": "logout",
+  };
+
+  if (data.method == "get") {
+    getTemplate("logout", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
+          }
+        );
       } else {
         callback(500, undefined, "html");
       }
@@ -171,11 +214,11 @@ handlers._users.post = (data, callback) => {
         "users",
         user.email,
         { ...user, password: hashedPassword },
-        (err,data)=>{
-          if(!err && data) {
-            callback(201,data)
-          }else{
-            callback(err,data)
+        (err, data) => {
+          if (!err && data) {
+            callback(201, data);
+          } else {
+            callback(err, data);
           }
         }
       );
@@ -380,9 +423,13 @@ handlers._tokens.post = (data, callback) => {
                         tokenObject,
                         (err, tokenData) => {
                           if (!err) {
-                            callback(false, 
-                            tokenData,'json'
+                            const currentDate = new Date();
+                            console.log(
+                              `User has logged in: ${currentDate.getDate()}.${
+                                currentDate.getMonth() + 1
+                              }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
                             );
+                            callback(false, tokenData, "json");
                           } else {
                             callback(err, {
                               Error:
@@ -425,6 +472,67 @@ handlers._tokens.post = (data, callback) => {
   }
 };
 
+handlers._tokens.put = (data, callback) => {
+  const payload = typeof data.payload == "string" ? data.payload : false;
+  if (!payload) {
+    callback(400, { Error: "missing token data." });
+  } else {
+    const token = JSON.parse(payload);
+    const { email, id } = token;
+    // Checking whether the user already logged in
+    dataUtil.read("loggedin", email, (err, logData) => {
+      if (err != 404 && logData) {
+        const tokenId =
+          typeof logData.tokenId == "string" ? logData.tokenId : false;
+        if (tokenId) {
+          // Checking if the token is exists.
+          dataUtil.read("tokens", tokenId, (err, tokenData) => {
+            let tokenObject = {};
+            const currentDate = new Date();
+            const expires = Date.now() + 1000 * 60 * 10;
+            if (!err && tokenData.email == email) {
+              tokenObject = {
+                ...tokenData,
+                expires,
+              };
+            } else {
+              callback(403, { Error: "not authorized to renew the token." });
+            }
+            // Renewing the token.
+            dataUtil.update(
+              "tokens",
+              tokenId,
+              tokenObject,
+              (err, updatedTokenData) => {
+                if (!err && updatedTokenData) {
+                  console.log(
+                    `Token is renewed: ${currentDate.getDate()}.${
+                      currentDate.getMonth() + 1
+                    }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
+                  );
+                  callback(false, updatedTokenData, "json");
+                } else {
+                  callback(400, {
+                    Error:
+                      "error during renew token:" + updatedTokenData["Error"],
+                  });
+                }
+              }
+            );
+          });
+        } else {
+          callback(400, { Error: "error with token id during renew token." });
+        }
+      } else {
+        callback(err, {
+          Error:
+            "error occured during token renew login check: " + logData["Error"],
+        });
+      }
+    });
+  }
+};
+
 // LOGOUT
 handlers._tokens.delete = (data, callback) => {
   // because of security reasons the token will be send in the headers
@@ -445,6 +553,12 @@ handlers._tokens.delete = (data, callback) => {
             // TODO: Creating a process to logout users automatically when token expires
             dataUtil.delete("loggedin", user.email, (err, loggedInData) => {
               if (!err && loggedInData) {
+                const currentDate = new Date();
+                console.log(
+                  `User has logged out: ${currentDate.getDate()}.${
+                    currentDate.getMonth() + 1
+                  }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
+                );
                 callback(false, { success: "logout was successsfull." });
               } else {
                 callback(err, {
@@ -469,7 +583,7 @@ handlers._tokens.delete = (data, callback) => {
 };
 
 handlers.tokens = (data, callback) => {
-  if (isAcceptableMethod(["POST", "DELETE"], data)) {
+  if (isAcceptableMethod(["POST", "PUT", "DELETE"], data)) {
     // POST - login, DELETE - logout
     handlers._tokens[data.method](data, callback);
   } else {
