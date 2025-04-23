@@ -31,7 +31,7 @@ pizzaServer.unifiedServer = (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const query = parsedUrl.query;
   const pathName = parsedUrl.pathname;
-  const trimmedPath = pathName.slice(1)
+  const trimmedPath = pathName.slice(1);
   const decoder = new StringDecoder("utf-8");
 
   let payloadBuffer = "";
@@ -51,61 +51,57 @@ pizzaServer.unifiedServer = (req, res) => {
       payload: payloadBuffer,
     };
 
-
-
-    let selectedRouter=false;
-    if (trimmedPath.includes('public')) { 
-        selectedRouter =
-      typeof Object.keys(pizzaServer.routing).includes('public')
-        ? pizzaServer.routing['public']
+    let selectedRouter = false;
+    if (trimmedPath.includes("public")) {
+      selectedRouter = typeof Object.keys(pizzaServer.routing).includes(
+        "public"
+      )
+        ? pizzaServer.routing["public"]
         : false;
-      }
-      else { 
-        selectedRouter =
-      typeof pizzaServer.routing[trimmedPath] !== undefined
-        ? pizzaServer.routing[trimmedPath]
-        : false;
-      }
-    
-    
+    } else {
+      selectedRouter =
+        typeof pizzaServer.routing[trimmedPath] !== undefined
+          ? pizzaServer.routing[trimmedPath]
+          : false;
+    }
+
     const handlerCallback = (statusCode, payload, contentType = "json") => {
-
       try {
         statusCode = typeof statusCode == "number" ? statusCode : 200;
 
-       let payloadString = "";
-       let headers = { "Content-Type": "application/json" };
+        let payloadString = "";
+        let headers = { "Content-Type": "application/json" };
 
         if (contentType == "json") {
           payload = typeof payload == "object" ? payload : {};
           payloadString = JSON.stringify(payload);
-        } 
-        if (contentType=='html') {
+        }
+        if (contentType == "html") {
           headers = { "Content-Type": "text/html" };
           payload = typeof payload === "string" ? payload : "";
           payloadString = payload;
         }
-        if (contentType=='js') {
+        if (contentType == "js") {
           headers = { "Content-Type": "text/javascript" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
-        if (contentType=='css') {
+        if (contentType == "css") {
           headers = { "Content-Type": "text/css" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
-        if (contentType=='jpeg') {
+        if (contentType == "jpeg") {
           headers = { "Content-Type": "image/jpeg" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
-        if (contentType=='png') {
+        if (contentType == "png") {
           headers = { "Content-Type": "image/png" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
         }
-        if (contentType=='ico') {
+        if (contentType == "ico") {
           headers = { "Content-Type": "image/x-icon" };
           payload = typeof Buffer.isBuffer(payload) ? payload : "";
           payloadString = payload;
@@ -135,12 +131,13 @@ pizzaServer.routing = {
   "account/delete": handlers.accountDelete,
   "account/login": handlers.login,
   "account/logout": handlers.logout,
+  "pizza/menu": handlers.pizzamenulist,
   "api/users": handlers.users,
   "api/tokens": handlers.tokens,
   "api/pizzamenu": handlers.pizzamenu,
   "api/shoppingcart": handlers.shoppingcart,
   "api/order": handlers.order,
-  "public":handlers.public,
+  public: handlers.public,
 };
 
 pizzaServer.init = () => {

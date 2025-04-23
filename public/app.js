@@ -1,3 +1,4 @@
+
 // Frontend app. container
 const app = {};
 
@@ -35,7 +36,7 @@ app.client.request = (
       : {};
   payload = typeof payload == "object" && payload !== null ? payload : {};
   callback = typeof callback == "function" ? callback : false;
-  const requestUrl = path + "?";
+  let requestUrl = path + "?";
   let counter = 0;
 
   // Extending requestUrl with query keys and values
@@ -45,7 +46,7 @@ app.client.request = (
       if (counter > 1) {
         requestUrl += "&";
       }
-      requestUrl = key + "=" + queryStringObject[key];
+      requestUrl += key + "=" + queryStringObject[key];
     }
   }
 
@@ -398,6 +399,96 @@ app.init = function () {
       true
     );
   });
+
+  app.loadDataOnPage();
+};
+
+app.loadDataOnPage = function(){
+  // Get the current page from the body class
+  var bodyClasses = document.querySelector("body").classList;
+  var primaryClass = typeof(bodyClasses[0]) == 'string' ? bodyClasses[0] : false;
+
+  // Logic for account settings page
+  if(primaryClass == 'pizzaMenu'){
+    app.loadPizzaMenu();
+  }
+};
+
+
+app.loadPizzaMenu = function(){
+  // Get the phone number from the current token, or log the user out if none is there
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
+    // Fetch the user data
+    var queryStringObject = {
+      email
+    };
+    app.client.request(undefined,'api/pizzamenu','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+      if(statusCode == 200 && responsePayload){
+        const pizzaList=responsePayload.items instanceof Array ? responsePayload.items:false
+ 
+        if (pizzaList) {
+        // Creating table
+        const tableContainer=document.querySelector('.scrollable-table')
+        const table=document.createElement('table');
+        const tHead=document.createElement('thead');
+        const tBody=document.createElement('tbody');
+        
+        // Create header rows
+        const hRow=document.createElement('tr');
+        const hName=document.createElement('th');
+        hName.innerText='Name'
+        hName.className='pizzaName';
+        const hIngredients=document.createElement('th');
+        hIngredients.innerText='Ingredients'
+        hIngredients.className='pizzaIngredients';
+        const hPrice=document.createElement('th');
+        hPrice.innerText='Price'
+        hPrice.className='pizzaPrice';
+
+        // Creating table structure
+        tableContainer.appendChild(table);
+        table.appendChild(tHead);
+        table.appendChild(tBody);
+        tHead.appendChild(hRow);
+        hRow.appendChild(hName);
+        hRow.appendChild(hIngredients);
+        hRow.appendChild(hPrice);
+        
+      
+          pizzaList.forEach((item) => {
+            // Create a table row
+            const row = document.createElement('tr');
+            const nameElement = document.createElement('td');
+            const ingredientsElement = document.createElement('td');
+            const priceElement = document.createElement('td');
+            nameElement.textContent = item.name;
+            nameElement.className='pizzaName'
+            ingredientsElement.textContent = item.ingredients;
+            ingredientsElement.className='pizzaIngredients'
+            priceElement.textContent = item.price;
+            priceElement.className='pizzaPrice'
+            row.appendChild(nameElement);
+            row.appendChild(ingredientsElement);
+            row.appendChild(priceElement);
+            row.style='background-color: tomato;';
+          
+       
+            // const pizzaRowElement = document.querySelector('tbody');
+            tBody.appendChild(row);
+          });
+          const tdElements=document.querySelectorAll('td')
+          tdElements.forEach((td)=>{
+            // td.style='padding: 2rem';
+          })
+        }
+      } else {
+        app.errorMessage("Error: "+statusCode+" - Something went wrong when communicating with the server.")
+      }
+    });
+  } else {
+    app.errorMessage("Your email creditantial is missing.")
+  }
 };
 
 // Call the init processes after the window loads

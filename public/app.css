@@ -42,6 +42,52 @@ button a {
   text-decoration: none;
 }
 
+tbody {
+  color:beige
+}
+
+.scrollable-table {
+  border-collapse: collapse;
+  border: 1px solid black;
+  table-layout: fixed;
+}
+
+.scrollable-table thead {
+  display: table;
+  table-layout: fixed;
+}
+
+.scrollable-table tbody {
+  display: block;
+  max-height: 200px;   /* Scroll height */
+  overflow-y: auto;
+}
+
+th, td {
+  padding: 0.5rem;
+}
+
+.pizzaName {
+  width: 10rem;
+}
+
+.pizzaIngredients {
+  width: 34rem;
+}
+
+.pizzaPrice {
+  width: 3rem;
+  text-align: right;
+}
+
+
+.scrollable-table tbody tr {
+  display: table;
+  table-layout: fixed;
+  border-top: 1px solid black;
+}
+
+
 .wrapperVertical {
   display: flex;
   flex-direction: column;

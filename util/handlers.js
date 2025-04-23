@@ -188,6 +188,40 @@ handlers.logout = (data, callback) => {
   }
 };
 
+handlers.pizzamenulist = (data, callback) => {
+  // Page specific variables
+  const templateVariables = {
+    "head.title": "Pizza Menu",
+    "head.description": "List of our pizzas",
+    "body.class": "pizzaMenu",
+    "pizzaMenu.title": "Our Pizza Menu",
+  };
+
+  if (data.method == "get") {
+    getTemplate("pizzaMenu", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
+          }
+        );
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
 // HANBDLERS FOR JSON
 
 // CREATE USER
