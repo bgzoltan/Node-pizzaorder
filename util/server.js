@@ -137,6 +137,7 @@ pizzaServer.routing = {
   "api/pizzamenu": handlers.pizzamenu,
   "api/shoppingcart": handlers.shoppingcart,
   "api/order": handlers.order,
+  "api/logoutcheck": handlers.logoutcheck,
   public: handlers.public,
 };
 

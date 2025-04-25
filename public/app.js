@@ -112,6 +112,8 @@ app.bindForms = function () {
       document.querySelector("#" + formId + " .formError").style.display =
         "hidden";
 
+     
+
       // Turn the inputs into a payload
       let payload = {};
       const elements = this.elements; // Selecting the form controll elements
@@ -153,20 +155,23 @@ app.bindForms = function () {
   }
 };
 
+// Create an info message for the user
 app.message = (messageText) => {
-  let message = document.querySelector("#messageBar #messageInfo");
-  message.innerText = messageText;
-  setTimeout(() => {
-    message.textContent = "";
-  }, 1000 * 15);
+  const infoMessage={
+    content: messageText,
+    expiresAt: Date.now() + 1000 * 8 // the message appears for 8 seconds
+  };
+  localStorage.setItem('infoMessage',JSON.stringify(infoMessage))
 };
 
+
+// Create an error message for the user
 app.errorMessage = (messageText) => {
-  let errorMessage = document.querySelector("#errorBar #errorInfo");
-  errorMessage.innerText = messageText;
-  setTimeout(() => {
-    errorMessage.textContent = "";
-  }, 1000 * 15);
+  const errorMessage={
+    content: messageText,
+    expiresAt: Date.now() + 1000 * 8 // the message appears for 8 seconds
+  };
+  localStorage.setItem('errorMessage',JSON.stringify(errorMessage))
 };
 
 // Form response processor
@@ -367,6 +372,63 @@ const inactiveTime = setInterval(() => {
   }
 }, 1000 * 30); // Check every half minute
 
+
+const checkIfUserLoggedOut = setInterval(() => {
+  const email =
+    typeof app.config.sessionToken.email == "string"
+      ? app.config.sessionToken.email
+      : false;
+
+  if (email) {
+    const queryStringObject = {
+      email
+    };
+    app.client.request(
+      undefined,
+      "api/logoutcheck",
+      "GET",
+      queryStringObject,
+      undefined,
+      function (statusCode, responsePayload) {
+        // Display an error on the form if needed
+        if (statusCode == 404) {
+          app.message("You have logged out by the server.");
+          localStorage.removeItem('token')
+          window.location.href='/account/login'
+        } else {
+          console.log(statusCode,responsePayload['Error']);
+        }
+      }
+    );
+  };
+}, 1000 * 30); // Check every half minute
+
+
+// Checking of user message in local storage every 2 seconds and display them
+const checkMessages = setInterval(() => {
+  const infoMessage=JSON.parse(localStorage.getItem('infoMessage'))
+  const errorMessage=JSON.parse(localStorage.getItem('errorMessage'))
+
+  if (infoMessage) {
+    let message = document.querySelector("#messageBar #messageInfo");
+    message.innerText = infoMessage.content;
+    if (Date.now() > infoMessage.expiresAt) {
+      localStorage.removeItem("infoMessage");
+      message.innerText='';
+    } 
+  }
+
+  if (errorMessage) {
+    let error= document.querySelector("#errorBar #errorInfo");
+    console.log('ERROR MESSAGE',Date.now(),errorMessage,'++')
+    error.innerText = errorMessage.content;
+    if (Date.now() > errorMessage.expiresAt) {
+      localStorage.removeItem("errorMessage");
+      error.innerText='';
+    } 
+  }
+}, 1000 * 2); 
+
 app.init = function () {
   const menuLinksH = document.querySelectorAll(".menuLink a");
   const currentPath = window.location.pathname;
@@ -381,6 +443,7 @@ app.init = function () {
       link.classList.add("active");
     }
   });
+
 
   // Bind all form submissions
   app.bindForms();
@@ -400,6 +463,7 @@ app.init = function () {
     );
   });
 
+  
   app.loadDataOnPage();
 };
 

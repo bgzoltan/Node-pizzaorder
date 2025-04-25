@@ -422,44 +422,48 @@ handlers._tokens.post = (data, callback) => {
 
       dataUtil.read("users", email, (err, userData) => {
         if (!err && userData) {
-          const hashedPassword = hash(password);
-          const tokenId = createRandomString(20);
 
           // Checking whether the user already logged in
           // I use loggedin folder to store the users who are logged in
           dataUtil.read("loggedin", email, (err, logData) => {
             if (err == 400) {
               callback(err, {
-                Error: "error occured during login check, " + data["Error"],
+                Error: "login check: " + data["Error"],
               });
             }
             if (err != 404 && logData) {
               callback(409, { Error: "user already logged in." });
             } else {
-              // if a user log in I create a log in loggedin folder
-              const loggedInTimeStamp = Date.now();
-              const loggedIn = { tokenId, date: loggedInTimeStamp };
-              dataUtil.create(
-                "loggedin",
-                email,
-                loggedIn,
-                (err, loggedInData) => {
-                  if (!err && loggedInData) {
-                    if (hashedPassword == userData.password) {
-                      const tokenObject = {
-                        id: tokenId,
-                        email,
-                        expires: Date.now() + 1000 * 60 * 10,
-                      };
+              const hashedPassword = hash(password);
+
+              // Checking the password
+              if (hashedPassword == userData.password) {
+                const tokenId = createRandomString(20);
+                const tokenObject = {
+                  id: tokenId,
+                  email,
+                  expires: Date.now() + 1000 * 60 * 10,  // Token expires in 10 minutes
+                 };
+
+                // Create the token if passdword is ok
+                dataUtil.create(
+                  "tokens",
+                  tokenId,
+                  tokenObject,
+                  (err, tokenData) => {
+                    if (!err) {
+                      // if user is not logged in earlier and the pasword is ok then create a loggedin file
+                      const loggedInTimeStamp = Date.now();
+                      const loggedIn = { tokenId, date: loggedInTimeStamp };
                       dataUtil.create(
-                        "tokens",
-                        tokenId,
-                        tokenObject,
-                        (err, tokenData) => {
-                          if (!err) {
+                        "loggedin",
+                        email,
+                        loggedIn,
+                        (err, loggedInData) => {
+                          if (!err && loggedInData) {
                             const currentDate = new Date();
                             console.log(
-                              `User has logged in: ${currentDate.getDate()}.${
+                              `${email} user has logged in: ${currentDate.getDate()}.${
                                 currentDate.getMonth() + 1
                               }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
                             );
@@ -467,41 +471,40 @@ handlers._tokens.post = (data, callback) => {
                           } else {
                             callback(err, {
                               Error:
-                                "error occured when creating token, " +
-                                tokenData["Error"],
+                                "creating logged in file: " + loggedInData["Error"],
                             });
                           }
                         }
                       );
                     } else {
-                      callback(401, { Error: "the password is invalid." });
+                      callback(err, {
+                        Error:
+                          "creating token: " +tokenData["Error"],
+                      });
                     }
-                  } else {
-                    callback(err, {
-                      Error:
-                        "error occured during login, " + loggedInData["Error"],
-                    });
                   }
-                }
-              );
+                );
+              } else {
+                callback(401, { Error: "the password is invalid." });
+              }
             }
           });
         } else {
           if (err == 404) {
             callback(401, {
-              Error: "the token is invalid, " + userData["Error"],
+              Error: "invalid token: " + userData["Error"],
             });
           } else {
             callback(401, {
               Error:
-                "error occured during login, when checking the user, " +
+                "checking the user: " +
                 userData["Error"],
             });
           }
         }
       });
     } else {
-      callback(400, { Error: "missing token data or invalid token." });
+      callback(400, { Error: "invalid token." });
     }
   }
 };
@@ -523,7 +526,7 @@ handlers._tokens.put = (data, callback) => {
           dataUtil.read("tokens", tokenId, (err, tokenData) => {
             let tokenObject = {};
             const currentDate = new Date();
-            const expires = Date.now() + 1000 * 60 * 10;
+            const expires = Date.now() + 1000 * 60 * 10; // New token expires in 10 minutes
             if (!err && tokenData.email == email) {
               tokenObject = {
                 ...tokenData,
@@ -566,6 +569,7 @@ handlers._tokens.put = (data, callback) => {
     });
   }
 };
+
 
 // LOGOUT
 handlers._tokens.delete = (data, callback) => {
@@ -617,7 +621,7 @@ handlers._tokens.delete = (data, callback) => {
 };
 
 handlers.tokens = (data, callback) => {
-  if (isAcceptableMethod(["POST", "PUT", "DELETE"], data)) {
+  if (isAcceptableMethod(["POST", "PUT", "DELETE","GET"], data)) {
     // POST - login, DELETE - logout
     handlers._tokens[data.method](data, callback);
   } else {
@@ -1046,5 +1050,41 @@ handlers.order = (data, callback) => {
     }
   } else {
     callback(400, { Error: "missing or invalid payment data." });
+  }
+};
+
+
+
+// LOGOUTCHECK HANDLERS *****************
+
+handlers._logoutcheck = {};
+
+handlers.logoutcheck = (data, callback) => {
+  if (isAcceptableMethod(["GET"], data)) {
+    handlers._logoutcheck[data.method](data, callback);
+  } else {
+    callback(405, { Error: "this request method is not allowed." });
+  }
+};
+
+// Checking if the user logged out.
+handlers._logoutcheck.get = (data, callback) => {
+  const { query }=data;
+  if (!query) {
+    callback(400, { Error: "missing query data." });
+  } else {
+    const {email} = query;
+    if (email) {
+      // Checking if the user already logged out
+      dataUtil.read("loggedin", email, (err, loggedInData) => {
+        if (!err && loggedInData) {
+          callback(false,{})
+        } else {
+          callback(err, { Error: loggedInData['Error']});
+        }
+      });
+    } else {
+      callback(400, { Error: "missing query data." });
+    }
   }
 };
