@@ -71,6 +71,39 @@ export function isValidUserData(user) {
   }
 }
 
+export function isValidUserDataForModification(user) {
+  const firstName =
+    typeof user.firstName == "string" && user.firstName.length <= 15
+      ? user.firstName
+      : "";
+  const lastName =
+    typeof user.lastName == "string" && user.lastName.length <= 20
+      ? user.lastName
+      : "";
+  const password =
+    typeof user.password == "string" &&
+    user.password.trim().length >= 8 &&
+    isValidPassword(user.password)
+      ? user.password
+      : false;
+
+  const email =
+    typeof user.email == "string" && isValidEmail(user.email)
+      ? user.email
+      : false;
+
+  const street =
+    typeof user.street == "string" && isValidStreet(user.street)
+      ? user.street
+      : false;
+    
+  if (email && (firstName || lastName || password || street)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export function isAcceptableMethod(acceptableMethods, data) {
   if (acceptableMethods.includes(data.method.toUpperCase())) {
     return true;

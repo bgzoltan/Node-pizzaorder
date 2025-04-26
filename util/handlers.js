@@ -14,6 +14,8 @@ import {
   getTemplate,
   addUniversalTemplates,
   getStaticAsset,
+  isValidUserDataForModification,
+  isValidPassword
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -106,11 +108,11 @@ handlers.accountEdit = (data, callback) => {
     "head.title": "Edit Account",
     "head.description": "User can edit profile data",
     "body.class": "accountEdit",
-    "accountCreate.title": "Edit Your Account Profile",
+    "accountEdit.title": "Edit Your Account Profile",
   };
 
   if (data.method == "get") {
-    getTemplate("accountCreate", templateVariables, (err, templateData) => {
+    getTemplate("accountEdit", templateVariables, (err, templateData) => {
       if (!err && templateData) {
         // Add the universal header and footer
         addUniversalTemplates(
@@ -344,7 +346,7 @@ handlers._users.put = (data, callback) => {
   } else {
     const user = JSON.parse(payload);
 
-    if (isValidUserData(user)) {
+    if (isValidUserDataForModification(user)) {
       const tokenId =
         typeof data.headers.token === "string" &&
         data.headers.token.length == 20
@@ -354,27 +356,52 @@ handlers._users.put = (data, callback) => {
       if (tokenId) {
         isValidNotExpiredToken(tokenId, user.email, function (err) {
           if (!err) {
-            const hashedPassword = hash(user.password);
-            //   The user cannot update his email address
-            dataUtil.update(
-              "users",
-              user.email,
-              {
-                firstName: user.firstName,
-                lastName: user.lastName,
-                street: user.street,
-                password: hashedPassword,
-              },
-              (err, data) => {
-                if (!err && data) {
-                  // Don't send back the password
-                  const { password, ...userWOPassword } = data;
-                  callback(200, userWOPassword);
+
+            // Reading the original password
+            dataUtil.read('users',user.email,(err,userData)=>{
+              if (!err && userData) {
+                let hashedPassword=userData.password;
+                if (user.password.trim().length==0) {
+                  // User did not change the password because the default value is an empty string on the form
                 } else {
-                  callback(err, data);
-                }
+                  // User changed the password
+                  const password =
+                  typeof user.password == "string" &&
+                  user.password.trim().length >= 8 &&
+                  isValidPassword(user.password)
+                    ? user.password
+                    : false;
+                  if (password) {
+                    hashedPassword = hash(password);
+                  } else {
+                    callback(400,{Error:'invalid password.'})
+                  }
+                };
+
+                //   The user cannot update his email address
+                dataUtil.update(
+                  "users",
+                  user.email,
+                  {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    street: user.street,
+                    password: hashedPassword,
+                  },
+                  (err, data) => {
+                    if (!err && data) {
+                      // Don't send back the password
+                      const { password, ...userWOPassword } = data;
+                      callback(200, userWOPassword);
+                    } else {
+                      callback(err, data);
+                    }
+                  }
+                );
+              } else {
+                callback(400,{Error:'could not read user data.'})
               }
-            );
+            })
           } else {
             callback(403, {
               Error: err,
@@ -429,6 +456,7 @@ handlers._users.delete = (data, callback) => {
 };
 
 handlers.users = (data, callback) => {
+
   if (isAcceptableMethod(["GET", "POST", "DELETE", "PUT"], data)) {
     handlers._users[data.method](data, callback);
   } else {
@@ -621,8 +649,6 @@ handlers._tokens.delete = (data, callback) => {
       if (!err) {
         dataUtil.delete("tokens", tokenId, (err) => {
           if (!err) {
-            // Delete log file of the user
-            // TODO: Creating a process to logout users automatically when token expires
             dataUtil.delete("loggedin", user.email, (err, loggedInData) => {
               if (!err && loggedInData) {
                 const currentDate = new Date();

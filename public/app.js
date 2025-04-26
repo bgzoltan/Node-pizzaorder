@@ -25,16 +25,25 @@ app.client.request = (
   //TODO: check whether the server has not logged the user out because some function only will be available for logged in users
   headers = typeof headers == "object" && headers !== null ? headers : {};
   path = typeof path == "string" ? path : "/";
-  method =
+  payload = typeof payload == "object" && payload !== null ? payload : {};
+
+  // Hidden method check for PUT and DELETE forms
+  if (payload._method){
+    method=payload._method;
+    delete payload._method
+  } else {
+    method =
     typeof method == "string" &&
     ["GET", "POST", "PUT", "DELETE"].includes(method.toUpperCase())
       ? method
       : "GET";
+  }
+ 
   queryStringObject =
     typeof queryStringObject == "object" && queryStringObject !== null
       ? queryStringObject
       : {};
-  payload = typeof payload == "object" && payload !== null ? payload : {};
+
   callback = typeof callback == "function" ? callback : false;
   let requestUrl = path + "?";
   let counter = 0;
@@ -77,6 +86,10 @@ app.client.request = (
         const statusCode = xhr.status;
         const statusText = xhr.statusText;
         const responseReturned = xhr.responseText;
+
+        // Messages to the user on successfull FORM activities
+        // Account Edit function
+        if (path.includes('/api/users') && method=='PUT' && statusCode==200) {app.message('Account updated successfully.')}
 
         // Callback (if there is a callback)
         if (callback) {
@@ -159,7 +172,7 @@ app.bindForms = function () {
 app.message = (messageText) => {
   const infoMessage={
     content: messageText,
-    expiresAt: Date.now() + 1000 * 8 // the message appears for 8 seconds
+    expiresAt: Date.now() + 1000 * 5 // the message appears for 8 seconds
   };
   localStorage.setItem('infoMessage',JSON.stringify(infoMessage))
 };
@@ -169,7 +182,7 @@ app.message = (messageText) => {
 app.errorMessage = (messageText) => {
   const errorMessage={
     content: messageText,
-    expiresAt: Date.now() + 1000 * 8 // the message appears for 8 seconds
+    expiresAt: Date.now() + 1000 * 5 // the message appears for 8 seconds
   };
   localStorage.setItem('errorMessage',JSON.stringify(errorMessage))
 };
@@ -218,7 +231,10 @@ app.bindLogoutButton = () => {
   });
 };
 
+
 app.logoutProcess = () => {
+  window.location.href = "/account/logout";
+
   const tokenId =
     typeof app.config.sessionToken.id == "string"
       ? app.config.sessionToken.id
@@ -249,8 +265,8 @@ app.logoutProcess = () => {
         } else {
           app.deleteSessionToken();
           app.setLoggedInClass(false);
+          app.message('You have logged out successfully.');
           clearInterval(inactiveTime);
-          window.location.href = "/account/logout";
         }
       }
     );
@@ -263,16 +279,18 @@ app.logoutProcess = () => {
 app.setLoggedInClass = function (loggedIn) {
   let target1 = document.querySelector(".showHide");
   let target2 = document.querySelector(".switchDisabled a");
-  if (target1 && target2) {
+  let hideWhenLogout=document.querySelector(".hideWhenLogout");
+
     if (loggedIn) {
-      target1.style.visibility = "hidden";
-      target2.style.pointerEvents = "none";
+      if (target1) target1.style.visibility = "hidden";
+      if (target2) target2.style.pointerEvents = "none";
+      if (hideWhenLogout) hideWhenLogout.style.visibility="visible";
     } else {
-      target1.style.visibility = "visible";
-      target2.style.pointerEvents = "auto";
-    }
-  }
-};
+      if (target1) target1.style.visibility = "visible";
+      if (target2) target2.style.pointerEvents = "auto";
+      if (hideWhenLogout) hideWhenLogout.style.visibility="hidden";
+    };
+  };
 
 // Get the session token from localstorage and set it in the app.config object
 app.getSessionToken = function () {
@@ -420,14 +438,13 @@ const checkMessages = setInterval(() => {
 
   if (errorMessage) {
     let error= document.querySelector("#errorBar #errorInfo");
-    console.log('ERROR MESSAGE',Date.now(),errorMessage,'++')
     error.innerText = errorMessage.content;
     if (Date.now() > errorMessage.expiresAt) {
       localStorage.removeItem("errorMessage");
       error.innerText='';
     } 
   }
-}, 1000 * 2); 
+}, 1000 * 1); 
 
 app.init = function () {
   const menuLinksH = document.querySelectorAll(".menuLink a");
@@ -463,7 +480,8 @@ app.init = function () {
     );
   });
 
-  
+  const form = document.querySelector("#accountEdit");
+
   app.loadDataOnPage();
 };
 
@@ -472,14 +490,19 @@ app.loadDataOnPage = function(){
   var bodyClasses = document.querySelector("body").classList;
   var primaryClass = typeof(bodyClasses[0]) == 'string' ? bodyClasses[0] : false;
 
-  // Logic for account settings page
+  // Logic for loading pizza menu page
   if(primaryClass == 'pizzaMenu'){
-    app.loadPizzaMenu();
+    app.loadPizzaMenuPageContent();
+  }
+
+  // Logic for loading account edit page
+  if(primaryClass == 'accountEdit'){
+    app.loadAccountEditPageContent();
   }
 };
 
 
-app.loadPizzaMenu = function(){
+app.loadPizzaMenuPageContent = function(){
   // Get the phone number from the current token, or log the user out if none is there
   var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
   if(email){
@@ -518,9 +541,7 @@ app.loadPizzaMenu = function(){
         hRow.appendChild(hName);
         hRow.appendChild(hIngredients);
         hRow.appendChild(hPrice);
-        
-      
-          pizzaList.forEach((item) => {
+        pizzaList.forEach((item) => {
             // Create a table row
             const row = document.createElement('tr');
             const nameElement = document.createElement('td');
@@ -536,15 +557,51 @@ app.loadPizzaMenu = function(){
             row.appendChild(ingredientsElement);
             row.appendChild(priceElement);
             row.style='background-color: tomato;';
-          
-       
-            // const pizzaRowElement = document.querySelector('tbody');
             tBody.appendChild(row);
           });
-          const tdElements=document.querySelectorAll('td')
-          tdElements.forEach((td)=>{
-            // td.style='padding: 2rem';
-          })
+        }
+      } else {
+        app.errorMessage("Error: "+statusCode+" - Something went wrong when communicating with the server.")
+      }
+    });
+  } else {
+    app.errorMessage("Your email creditantial is missing.")
+  }
+};
+
+app.loadAccountEditPageContent = function(){
+  // Get the phone number from the current token, or log the user out if none is there
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
+    // Fetch the user data
+    var queryStringObject = {
+      email
+    };
+    app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+
+  
+      if(statusCode == 200 && responsePayload){
+        const userAccountData=responsePayload ? responsePayload:false
+        if (userAccountData) {
+          // Grabbing form elements
+          const firstNameInputElement=document.querySelector('#accountEdit [name="firstName"]');
+          const lasttNameInputElement=document.querySelector('#accountEdit [name="lastName"]');
+          const streetInputElement=document.querySelector('#accountEdit [name="street"]');
+          const emailInputElement=document.querySelector('#accountEdit [name="email"]');
+          const passwordInputElement=document.querySelector('#accountEdit [name="password"]');
+          firstNameInputElement.value=userAccountData.firstName;
+          lasttNameInputElement.value=userAccountData.lastName;
+          emailInputElement.value=email;
+          streetInputElement.value=userAccountData.street;
+          passwordInputElement.value=''; // If user don't change his paswword it will remain empty
+
+          // Placing the hidden method to the form to handle the PUT request
+          const hiddenInputElement=document.createElement('input');
+          hiddenInputElement.type='hidden';
+          hiddenInputElement.name='_method';
+          hiddenInputElement.value='PUT';
+          const formElement=document.querySelector('form')
+          formElement.appendChild(hiddenInputElement)
         }
       } else {
         app.errorMessage("Error: "+statusCode+" - Something went wrong when communicating with the server.")

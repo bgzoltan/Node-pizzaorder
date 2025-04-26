@@ -59,6 +59,7 @@ pizzaServer.unifiedServer = (req, res) => {
         ? pizzaServer.routing["public"]
         : false;
     } else {
+
       selectedRouter =
         typeof pizzaServer.routing[trimmedPath] !== undefined
           ? pizzaServer.routing[trimmedPath]
@@ -76,6 +77,9 @@ pizzaServer.unifiedServer = (req, res) => {
           payload = typeof payload == "object" ? payload : {};
           payloadString = JSON.stringify(payload);
         }
+        console.log('PAYLOAD ***************',payload)
+        if (payload._method) {data.method='PUT'; delete payload._method}
+
         if (contentType == "html") {
           headers = { "Content-Type": "text/html" };
           payload = typeof payload === "string" ? payload : "";
@@ -127,7 +131,7 @@ pizzaServer.unifiedServer = (req, res) => {
 pizzaServer.routing = {
   "": handlers.index,
   "account/create": handlers.accountCreate,
-  "account/edit:": handlers.accountEdit,
+  "account/edit": handlers.accountEdit,
   "account/delete": handlers.accountDelete,
   "account/login": handlers.login,
   "account/logout": handlers.logout,

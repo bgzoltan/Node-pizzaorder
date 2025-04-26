@@ -1,0 +1,27 @@
+<div class="content" >
+    <div class="contentUpper">
+      <h1>{accountEdit.title}</h1>
+      <p>You can change your profile data here.</p>
+    </div>
+  <div class="contentCenter hideWhenLogout">
+      <div class="modal">
+        <form  class="wrapperVertical" id="accountEdit" action="/api/users" method="PUT">
+            <div class="formError"></div>
+            <div class="signupContainer">
+                <div class="inputLabel">First Name</div>
+                <input type="text" name="firstName" />
+                <div class="inputLabel">Last Name</div>
+                <input type="text" name="lastName" />
+                <div class="inputLabel">email</div>
+                <input type="text" name="email"  disabled/>
+                <div class="inputLabel">Street</div>
+                <input type="text" name="street" />
+                <div class="inputLabel">New password</div>
+                <input type="password" name="password" />
+            </div>
+            <button type="submit" class="buttonFirst">Update Account</button>
+        </form>
+      </div>
+  </div>
+</div>
+</main>
