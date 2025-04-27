@@ -136,6 +136,41 @@ handlers.accountEdit = (data, callback) => {
   }
 };
 
+handlers.accountDelete = (data, callback) => {
+  // Page specific variables
+  const templateVariables = {
+    "head.title": "Delete Account",
+    "head.description": "User can delete account",
+    "body.class": "accountDelete",
+    "accountDelete.title": "Delete Your Account",
+  };
+
+  if (data.method == "get") {
+    getTemplate("accountDelete", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
+          }
+        );
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
+
 handlers.public = (data, callback) => {
   if (data) {
     const { method } = data;
@@ -420,11 +455,15 @@ handlers._users.put = (data, callback) => {
 // DELETE USER DATA
 // email query and token are necessary
 handlers._users.delete = (data, callback) => {
-  const { query } = data;
+  const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
+
+  console.log('DELETE PAYLOAD',payload)
   const email =
-    typeof query.email == "string" && isValidEmail(query.email)
-      ? query.email
+    typeof payload.email == "string" && isValidEmail(payload.email)
+      ? payload.email
       : false;
+
+ 
 
   if (email) {
     const tokenId =

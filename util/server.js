@@ -77,7 +77,6 @@ pizzaServer.unifiedServer = (req, res) => {
           payload = typeof payload == "object" ? payload : {};
           payloadString = JSON.stringify(payload);
         }
-        console.log('PAYLOAD ***************',payload)
         if (payload._method) {data.method='PUT'; delete payload._method}
 
         if (contentType == "html") {

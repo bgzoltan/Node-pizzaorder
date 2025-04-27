@@ -6,12 +6,15 @@
 
 html,
 body {
-  height: 100%;
+  /* height: 100%; */
+  position: relative;
 }
 
 body {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
   background-color: beige;
   color: black;
@@ -30,6 +33,11 @@ body {
   height: 30px;
 }
 
+h2 {
+  font-size:x-large;
+  padding: 1rem;
+}
+
 ul {
   list-style: none;
 }
@@ -42,29 +50,39 @@ button a {
   text-decoration: none;
 }
 
-tbody {
-  color:beige
+.scrollable-table {
+  table-layout: fixed;
+  background-color:  rgb(186, 55, 7);
 }
 
-.scrollable-table {
-  border-collapse: collapse;
+
+.scrollable-table td,
+.scrollable-table th {
+  color: beige;
   border: 1px solid black;
-  table-layout: fixed;
+  padding: 1rem;
 }
 
 .scrollable-table thead {
+  border-collapse: collapse;
   display: table;
   table-layout: fixed;
 }
 
 .scrollable-table tbody {
+  border-collapse: collapse;
   display: block;
   max-height: 200px;   /* Scroll height */
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
-th, td {
-  padding: 0.5rem;
+.scrollable-table tbody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-table tbody::-webkit-scrollbar-thumb {
+  background-color: beige;
+  border-radius: 4px;
 }
 
 .pizzaName {
@@ -76,15 +94,8 @@ th, td {
 }
 
 .pizzaPrice {
-  width: 3rem;
+  width: 5rem;
   text-align: right;
-}
-
-
-.scrollable-table tbody tr {
-  display: table;
-  table-layout: fixed;
-  border-top: 1px solid black;
 }
 
 
@@ -149,7 +160,8 @@ th, td {
   align-items: center;
   color: beige;
   background-color: rgb(186, 55, 7);
-  padding: 2rem;
+  padding: 1rem;
+  margin: 1rem;
 }
 
 .buttonFirst {
@@ -230,20 +242,24 @@ input {
   visibility: hidden;
 }
 
-#errorBar {
+.errorModal {
   display: flex;
+  position: absolute;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #c83737;
+  background-color: red;
   color: white;
+  padding: 3rem;
 }
 
-#messageBar {
-  display: flex;
+.messageModal {
+  display:flex;
+  position: absolute;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #e68b24;
-  color: white;
+  background-color: lightgreen;
+  color: black;
+  padding: 3rem;
 }

@@ -87,9 +87,7 @@ app.client.request = (
         const statusText = xhr.statusText;
         const responseReturned = xhr.responseText;
 
-        // Messages to the user on successfull FORM activities
-        // Account Edit function
-        if (path.includes('/api/users') && method=='PUT' && statusCode==200) {app.message('Account updated successfully.')}
+       
 
         // Callback (if there is a callback)
         if (callback) {
@@ -114,57 +112,57 @@ app.client.request = (
 // Bind the forms
 app.bindForms = function () {
   if (document.querySelector("form")) {
-    document.querySelector("form").addEventListener("submit", function (e) {
-      // Stop it from submitting
-      e.preventDefault();
-      const formId = this.id;
-      const path = this.action;
-      const method = this.method.toUpperCase();
+    var allForms = document.querySelectorAll("form");
+    console.log('FORMS **** +++',allForms)
+    for(var i = 0; i < allForms.length; i++){
+      console.log('FORM +++',allForms[i])
+      allForms[i].addEventListener("submit", function(e){
+        // Stop it from submitting
 
-      // Hide the error message (if it's currently shown due to a previous error)
-      document.querySelector("#" + formId + " .formError").style.display =
-        "hidden";
+        e.preventDefault();
+        const formId = this.id;
+        const path = this.action;
+        const method = this.method.toUpperCase();
 
-     
-
-      // Turn the inputs into a payload
-      let payload = {};
-      const elements = this.elements; // Selecting the form controll elements
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].type !== "submit") {
-          let valueOfElement =
-            elements[i].type == "checkbox"
-              ? elements[i].checked
-              : elements[i].value;
-          payload[elements[i].name] = valueOfElement;
-        }
-      }
-
-      // Call the appropriate API
-      app.client.request(
-        undefined,
-        path,
-        method,
-        undefined,
-        payload,
-        function (statusCode, responsePayload) {
-          // Display an error on the form if needed
-          if (statusCode !== 200 && statusCode !== 201) {
-            // Try to get the error from the api, or set a default error message
-            var error =
-              typeof responsePayload.Error == "string"
-                ? responsePayload.Error
-                : "Error during API request.";
-
-            // Set the formError field with the error text
-            app.errorMessage(error);
-          } else {
-            // If successful, send to form response processor
-            app.formResponseProcessor(formId, payload, responsePayload);
+        // Turn the inputs into a payload
+        let payload = {};
+        const elements = this.elements; // Selecting the form controll elements
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].type !== "submit") {
+            let valueOfElement =
+              elements[i].type == "checkbox"
+                ? elements[i].checked
+                : elements[i].value;
+            payload[elements[i].name] = valueOfElement;
           }
         }
-      );
-    });
+
+        // Call the appropriate API
+        app.client.request(
+          undefined,
+          path,
+          method,
+          undefined,
+          payload,
+          function (statusCode, responsePayload) {
+            // Display an error on the form if needed
+            if (statusCode !== 200 && statusCode !== 201) {
+              // Try to get the error from the api, or set a default error message
+              var error =
+                typeof responsePayload.Error == "string"
+                  ? responsePayload.Error
+                  : "Error during API request.";
+
+              // Set the formError field with the error text
+              app.errorMessage(error);
+            } else {
+              // If successful, send to form response processor
+              app.formResponseProcessor(formId, payload, responsePayload);
+            }
+          }
+        );
+      });
+    };
   }
 };
 
@@ -220,6 +218,17 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
   if (formId == "login") {
     app.setSessionToken(responsePayload);
     app.message("You have logged in successfully.");
+  }
+
+ // Messages to the user on successfull FORM activities
+   if (formId=='accountEdit') 
+      app.message('Account updated successfully.')
+
+
+  if(formId == 'accountDelete'){
+    app.logoutProcess();
+    window.location = '/account/delete';
+    app.message('Account deleted successfully.')
   }
 };
 
@@ -419,7 +428,7 @@ const checkIfUserLoggedOut = setInterval(() => {
       }
     );
   };
-}, 1000 * 30); // Check every half minute
+}, 1000 * 10); // Check every half minute
 
 
 // Checking of user message in local storage every 2 seconds and display them
@@ -428,19 +437,25 @@ const checkMessages = setInterval(() => {
   const errorMessage=JSON.parse(localStorage.getItem('errorMessage'))
 
   if (infoMessage) {
-    let message = document.querySelector("#messageBar #messageInfo");
+    let message = document.querySelector("#messageModal #messageInfo");
     message.innerText = infoMessage.content;
+    const messageModalElement=document.querySelector('#messageModal');
+    messageModalElement.setAttribute('class','messageModal');
     if (Date.now() > infoMessage.expiresAt) {
+      messageModalElement.removeAttribute('class');
       localStorage.removeItem("infoMessage");
       message.innerText='';
     } 
   }
 
   if (errorMessage) {
-    let error= document.querySelector("#errorBar #errorInfo");
+    let error= document.querySelector("#errorModal #errorInfo");
     error.innerText = errorMessage.content;
+    const errorModalElement=document.querySelector('#errorModal');
+    errorModalElement.setAttribute('class','errorModal');
     if (Date.now() > errorMessage.expiresAt) {
-      localStorage.removeItem("errorMessage");
+      errorModalElement.removeAttribute('class');
+      localStorage.removeItem("errorModal");
       error.innerText='';
     } 
   }
@@ -499,6 +514,12 @@ app.loadDataOnPage = function(){
   if(primaryClass == 'accountEdit'){
     app.loadAccountEditPageContent();
   }
+
+  console.log('PRIMARY CLASS',primaryClass)
+  if(primaryClass == 'accountDelete'){
+    console.log('LOADING PAGE *****')
+    app.loadAccountDeletePageContent();
+  }
 };
 
 
@@ -556,7 +577,6 @@ app.loadPizzaMenuPageContent = function(){
             row.appendChild(nameElement);
             row.appendChild(ingredientsElement);
             row.appendChild(priceElement);
-            row.style='background-color: tomato;';
             tBody.appendChild(row);
           });
         }
@@ -570,7 +590,6 @@ app.loadPizzaMenuPageContent = function(){
 };
 
 app.loadAccountEditPageContent = function(){
-  // Get the phone number from the current token, or log the user out if none is there
   var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
   if(email){
     // Fetch the user data
@@ -587,11 +606,13 @@ app.loadAccountEditPageContent = function(){
           const firstNameInputElement=document.querySelector('#accountEdit [name="firstName"]');
           const lasttNameInputElement=document.querySelector('#accountEdit [name="lastName"]');
           const streetInputElement=document.querySelector('#accountEdit [name="street"]');
-          const emailInputElement=document.querySelector('#accountEdit [name="email"]');
+          const emailInputElementEdit=document.querySelector('#accountEdit [name="email"]');
+          const emailInputElementDelete=document.querySelector('#accountDelete [name="email"]');
           const passwordInputElement=document.querySelector('#accountEdit [name="password"]');
           firstNameInputElement.value=userAccountData.firstName;
           lasttNameInputElement.value=userAccountData.lastName;
-          emailInputElement.value=email;
+          emailInputElementEdit.value=email;
+          emailInputElementDelete.value=email;
           streetInputElement.value=userAccountData.street;
           passwordInputElement.value=''; // If user don't change his paswword it will remain empty
 
@@ -600,13 +621,41 @@ app.loadAccountEditPageContent = function(){
           hiddenInputElement.type='hidden';
           hiddenInputElement.name='_method';
           hiddenInputElement.value='PUT';
-          const formElement=document.querySelector('form')
+          const formElement=document.querySelector('#accountEdit')
           formElement.appendChild(hiddenInputElement)
         }
       } else {
         app.errorMessage("Error: "+statusCode+" - Something went wrong when communicating with the server.")
       }
     });
+  } else {
+    app.errorMessage("Your email creditantial is missing.")
+  }
+};
+
+app.loadAccountDeletePageContent = function(){
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
+    // Fetch the user data
+    var queryStringObject = {
+      email
+    };
+   
+  
+    const emailInputElement=document.querySelector('#accountDelete [name="email"]');
+    console.log('DDELETE ELEMENTS ---',email,'++')
+    emailInputElement.value=email;
+          // Placing the hidden method to the form to handle the PUT request
+          const hiddenInputElement=document.createElement('input');
+          hiddenInputElement.type='hidden';
+          hiddenInputElement.name='_method';
+          hiddenInputElement.value='DELETE';
+          const formElement=document.querySelector('#accountDelete')
+          console.log('ELEMENTS',hiddenInputElement,
+            formElement
+          )
+          formElement.appendChild(hiddenInputElement)
+       
   } else {
     app.errorMessage("Your email creditantial is missing.")
   }

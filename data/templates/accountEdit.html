@@ -1,12 +1,12 @@
-<div class="content" >
+  <div class="content" >
     <div class="contentUpper">
       <h1>{accountEdit.title}</h1>
       <p>You can change your profile data here.</p>
     </div>
-  <div class="contentCenter hideWhenLogout">
-      <div class="modal">
+    <div class="contentCenter hideWhenLogout">
+      <div class="modal wrapperVertical">
+        <h2>Update Your Account</h2>
         <form  class="wrapperVertical" id="accountEdit" action="/api/users" method="PUT">
-            <div class="formError"></div>
             <div class="signupContainer">
                 <div class="inputLabel">First Name</div>
                 <input type="text" name="firstName" />
@@ -21,7 +21,15 @@
             </div>
             <button type="submit" class="buttonFirst">Update Account</button>
         </form>
+        <div>-------------------</div>
+        <h2>Delete Your Account</h2>
+        <form class="wrapperVertical" id="accountDelete" action="/api/users" method="DELETE">
+          <input type="hidden" name="_method" value="DELETE"/>
+          <div class="warning">Warning: This action cannot be undone. Dont click this button on accident!</div>
+          <input type="hidden" name="email" />
+          <button type="submit" class="buttonFirst">Delete Account</button>
+        </form>
       </div>
+    </div>
   </div>
-</div>
 </main>
