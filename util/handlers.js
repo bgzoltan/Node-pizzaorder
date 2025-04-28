@@ -491,7 +491,6 @@ handlers._users.put = (data, callback) => {
 handlers._users.delete = (data, callback) => {
   const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
 
-  console.log('DELETE PAYLOAD',payload)
   const email =
     typeof payload.email == "string" && isValidEmail(payload.email)
       ? payload.email
@@ -826,7 +825,6 @@ handlers.shoppingcart = (data, callback) => {
 // }
 handlers._shoppingcart.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
-  console.log('SHOPPING CART',payload, data)
 
   if (payload) {
     const shoppingCart = JSON.parse(payload);
@@ -835,10 +833,8 @@ handlers._shoppingcart.post = (data, callback) => {
         ? data.headers.token
         : false;
 
-    console.log('SHOPPING',tokenId,shoppingCart)
     if (tokenId) {
       isValidNotExpiredToken(tokenId, shoppingCart.email, function (err) {
-        console.log('SHOPPING ERROR',err)
         if (!err) {
           const items =
             typeof shoppingCart.items == "object" &&
@@ -847,7 +843,6 @@ handlers._shoppingcart.post = (data, callback) => {
               ? shoppingCart.items
               : false;
           const shoppingCartDate = parseInt(Date.now());
-          console.log('SHOPPING ITEMS',items)
           // Summarize item prices
           summarizeOrderItems(items, (err, totalData) => {
             if (err) {
