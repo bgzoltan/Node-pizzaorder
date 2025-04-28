@@ -259,17 +259,51 @@ handlers.logout = (data, callback) => {
   }
 };
 
-handlers.pizzamenulist = (data, callback) => {
+handlers.menulist = (data, callback) => {
   // Page specific variables
   const templateVariables = {
     "head.title": "Pizza Menu",
     "head.description": "List of our pizzas",
-    "body.class": "pizzaMenu",
-    "pizzaMenu.title": "Our Pizza Menu",
+    "body.class": "menuList",
+    "menuList.title": "Our Pizza Menu",
   };
 
   if (data.method == "get") {
-    getTemplate("pizzaMenu", templateVariables, (err, templateData) => {
+    getTemplate("menuList", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
+          }
+        );
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
+handlers.menuorder = (data, callback) => {
+  // Page specific variables
+  const templateVariables = {
+    "head.title": "Pizza Order",
+    "head.description": "You can order your pizza",
+    "body.class": "menuOrder",
+    "menuOrder.title": "Orderig your pizza",
+  };
+
+  if (data.method == "get") {
+    getTemplate("menuOrder", templateVariables, (err, templateData) => {
       if (!err && templateData) {
         // Add the universal header and footer
         addUniversalTemplates(
@@ -730,11 +764,11 @@ handlers.tokens = (data, callback) => {
 
 // PIZZAMENU HANDLERS *****************
 
-handlers._pizzamenu = {};
+handlers._menu = {};
 
-handlers.pizzamenu = (data, callback) => {
+handlers.menu = (data, callback) => {
   if (isAcceptableMethod(["GET"], data)) {
-    handlers._pizzamenu[data.method](data, callback);
+    handlers._menu[data.method](data, callback);
   } else {
     callback(405, { Error: "this request method is not allowed." });
   }
@@ -742,7 +776,7 @@ handlers.pizzamenu = (data, callback) => {
 
 // GET THE FULL PIZZA MENU
 // email query and token are necessary
-handlers._pizzamenu.get = (data, callback) => {
+handlers._menu.get = (data, callback) => {
   const { query } = data;
   const email =
     typeof query.email == "string" && isValidEmail(query.email)
@@ -792,6 +826,7 @@ handlers.shoppingcart = (data, callback) => {
 // }
 handlers._shoppingcart.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
+  console.log('SHOPPING CART',payload, data)
 
   if (payload) {
     const shoppingCart = JSON.parse(payload);
@@ -799,8 +834,11 @@ handlers._shoppingcart.post = (data, callback) => {
       typeof data.headers.token === "string" && data.headers.token.length == 20
         ? data.headers.token
         : false;
+
+    console.log('SHOPPING',tokenId,shoppingCart)
     if (tokenId) {
       isValidNotExpiredToken(tokenId, shoppingCart.email, function (err) {
+        console.log('SHOPPING ERROR',err)
         if (!err) {
           const items =
             typeof shoppingCart.items == "object" &&
@@ -809,7 +847,7 @@ handlers._shoppingcart.post = (data, callback) => {
               ? shoppingCart.items
               : false;
           const shoppingCartDate = parseInt(Date.now());
-
+          console.log('SHOPPING ITEMS',items)
           // Summarize item prices
           summarizeOrderItems(items, (err, totalData) => {
             if (err) {

@@ -113,9 +113,7 @@ app.client.request = (
 app.bindForms = function () {
   if (document.querySelector("form")) {
     var allForms = document.querySelectorAll("form");
-    console.log('FORMS **** +++',allForms)
     for(var i = 0; i < allForms.length; i++){
-      console.log('FORM +++',allForms[i])
       allForms[i].addEventListener("submit", function(e){
         // Stop it from submitting
 
@@ -136,6 +134,33 @@ app.bindForms = function () {
             payload[elements[i].name] = valueOfElement;
           }
         }
+
+        if (formId=='menuOrder') {
+          // Forming the payload object according to the shopping cart API
+          payload={};
+          const tableBodyElement = document.querySelector('.scrollable-table tbody');
+          const rowElements = tableBodyElement.querySelectorAll('tr');
+
+          const pizzaOrders = [];
+
+          rowElements.forEach((row) => {
+            const nameInputElement = rowElements.querySelector('input.pizza-name');
+            const priceInputElement = rowElements.querySelector('input.pizza-price');
+            const qtyInputElement = rowElements.querySelector('input.pizza-qty');
+
+            if (qtyInputElement && parseInt(qtyInputElement.value) > 0) {
+              const pizza = {
+                name: nameInputElement.value,
+                price: parseInt(priceInputElement.value),
+                qty: parseInt(qtyInputElement.value)
+              };
+              pizzaOrders.push(pizza);
+            };
+          });
+          const emailInputElement=document.querySelector('[name="user-email"]')
+          // Formatted payload
+          payload={email:emailInputElement.value, items:pizzaOrders}
+        };
 
         // Call the appropriate API
         app.client.request(
@@ -428,7 +453,7 @@ const checkIfUserLoggedOut = setInterval(() => {
       }
     );
   };
-}, 1000 * 10); // Check every half minute
+}, 1000 * 1); // 
 
 
 // Checking of user message in local storage every 2 seconds and display them
@@ -505,9 +530,14 @@ app.loadDataOnPage = function(){
   var bodyClasses = document.querySelector("body").classList;
   var primaryClass = typeof(bodyClasses[0]) == 'string' ? bodyClasses[0] : false;
 
-  // Logic for loading pizza menu page
-  if(primaryClass == 'pizzaMenu'){
-    app.loadPizzaMenuPageContent();
+  // Logic for loading menu list page
+  if(primaryClass == 'menuList'){
+    app.loadMenuListPageContent();
+  }
+
+  // Logic for loading menu order page
+  if(primaryClass == 'menuOrder'){
+    app.loadMenuOrderPageContent();
   }
 
   // Logic for loading account edit page
@@ -515,56 +545,56 @@ app.loadDataOnPage = function(){
     app.loadAccountEditPageContent();
   }
 
-  console.log('PRIMARY CLASS',primaryClass)
   if(primaryClass == 'accountDelete'){
-    console.log('LOADING PAGE *****')
     app.loadAccountDeletePageContent();
   }
 };
 
 
-app.loadPizzaMenuPageContent = function(){
-  // Get the phone number from the current token, or log the user out if none is there
+app.loadMenuListPageContent = function(){
+  // Get the email  
   var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
   if(email){
-    // Fetch the user data
+    // Fetch the menu data
     var queryStringObject = {
       email
     };
-    app.client.request(undefined,'api/pizzamenu','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+    app.client.request(undefined,'api/menu','GET',queryStringObject,undefined,function(statusCode,responsePayload){
       if(statusCode == 200 && responsePayload){
         const pizzaList=responsePayload.items instanceof Array ? responsePayload.items:false
  
         if (pizzaList) {
         // Creating table
-        const tableContainer=document.querySelector('.scrollable-table')
-        const table=document.createElement('table');
-        const tHead=document.createElement('thead');
-        const tBody=document.createElement('tbody');
+        const tableContainerElement=document.querySelector('.scrollable-table')
+        const tableElement=document.createElement('table');
+        const tHeadElement=document.createElement('thead');
+        const tBodyElement=document.createElement('tbody');
         
         // Create header rows
-        const hRow=document.createElement('tr');
-        const hName=document.createElement('th');
-        hName.innerText='Name'
-        hName.className='pizzaName';
-        const hIngredients=document.createElement('th');
-        hIngredients.innerText='Ingredients'
-        hIngredients.className='pizzaIngredients';
-        const hPrice=document.createElement('th');
-        hPrice.innerText='Price'
-        hPrice.className='pizzaPrice';
+        const hRowElement=document.createElement('tr');
+        const hNameElement=document.createElement('th');
+        hNameElement.innerText='Name'
+        hNameElement.className='pizzaName';
+
+        const hIngredientsElement=document.createElement('th');
+        hIngredientsElement.innerText='Ingredients'
+        hIngredientsElement.className='pizzaIngredients';
+
+        const hPriceElement=document.createElement('th');
+        hPriceElement.innerText='Price'
+        hPriceElement.className='pizzaPrice';
 
         // Creating table structure
-        tableContainer.appendChild(table);
-        table.appendChild(tHead);
-        table.appendChild(tBody);
-        tHead.appendChild(hRow);
-        hRow.appendChild(hName);
-        hRow.appendChild(hIngredients);
-        hRow.appendChild(hPrice);
+        tableContainerElement.appendChild(tableElement);
+        tableElement.appendChild(tHeadElement);
+        tableElement.appendChild(tBodyElement);
+        tHeadElement.appendChild(hRowElement);
+        hRowElement.appendChild(hNameElement);
+        hRowElement.appendChild(hIngredientsElement);
+        hRowElement.appendChild(hPriceElement);
         pizzaList.forEach((item) => {
             // Create a table row
-            const row = document.createElement('tr');
+            const rowElement = document.createElement('tr');
             const nameElement = document.createElement('td');
             const ingredientsElement = document.createElement('td');
             const priceElement = document.createElement('td');
@@ -574,10 +604,10 @@ app.loadPizzaMenuPageContent = function(){
             ingredientsElement.className='pizzaIngredients'
             priceElement.textContent = item.price;
             priceElement.className='pizzaPrice'
-            row.appendChild(nameElement);
-            row.appendChild(ingredientsElement);
-            row.appendChild(priceElement);
-            tBody.appendChild(row);
+            rowElement.appendChild(nameElement);
+            rowElement.appendChild(ingredientsElement);
+            rowElement.appendChild(priceElement);
+            tBodyElement.appendChild(rowElement);
           });
         }
       } else {
@@ -589,10 +619,119 @@ app.loadPizzaMenuPageContent = function(){
   }
 };
 
+app.loadMenuOrderPageContent = function(){
+  // Get the email from the current token
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
+    // Fetch the menu data
+    var queryStringObject = {
+      email
+    };
+    app.client.request(undefined,'api/menu','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+      if(statusCode == 200 && responsePayload){
+        const pizzaList=responsePayload.items instanceof Array ? responsePayload.items:false
+ 
+        if (pizzaList) {
+          const tableContainerElement=document.querySelector('.scrollable-table');
+
+          // Creating table
+          const tableElement=document.createElement('table');
+          const tHeadElement=document.createElement('thead');
+          const tBodyElement=document.createElement('tbody');
+          
+          // Create header rows
+          const hRowElement=document.createElement('tr');
+          const hNameElement=document.createElement('th');
+          hNameElement.innerText='Name'
+          hNameElement.className='pizzaName';
+          const hIngredientsElement=document.createElement('th');
+          hIngredientsElement.innerText='Ingredients'
+          hIngredientsElement.className='pizzaIngredients';
+          const hPriceElement=document.createElement('th');
+          hPriceElement.innerText='Price'
+          hPriceElement.className='pizzaPrice';
+          // Extending the table with quantity column
+          const hQtyElement=document.createElement('th');
+          hQtyElement.innerText='Qty'
+          hQtyElement.className='pizzaQty';
+
+          // Creating table structure
+          tableContainerElement.appendChild(tableElement);
+          tableElement.appendChild(tHeadElement);
+          tableElement.appendChild(tBodyElement);
+          tHeadElement.appendChild(hRowElement);
+          hRowElement.appendChild(hNameElement);
+          hRowElement.appendChild(hIngredientsElement);
+          hRowElement.appendChild(hPriceElement);
+          hRowElement.appendChild(hQtyElement);
+          pizzaList.forEach((item) => {
+            // Create a table row
+            const rowElement = document.createElement('tr');
+            const nameElement = document.createElement('td');
+            const ingredientsElement = document.createElement('td');
+            const priceElement = document.createElement('td');
+            const qtyElement = document.createElement('td');
+            nameElement.className='pizzaName';
+            ingredientsElement.textContent = item.ingredients;
+            ingredientsElement.className='pizzaIngredients';
+            priceElement.className='pizzaPrice';
+            qtyElement.className='pizzaQty';
+         
+
+            // Create input elements to pass data to the form
+            const emailInputElement = document.createElement('input'); // for shoppingcart API to send user email
+            emailInputElement.type='hidden';
+            emailInputElement.name='user-email';
+            emailInputElement.value=app.config.sessionToken.email;
+
+            // Read only elements
+            const nameInputElement = document.createElement('input');
+            nameInputElement.type='text';
+            nameInputElement.readOnly=true;
+            nameInputElement.name='pizzaName'+'-'+item.name;
+            nameInputElement.className='pizza-name';
+            nameInputElement.value = item.name;
+
+            const priceInputElement = document.createElement('input');
+            priceInputElement.type='text';
+            priceInputElement.readOnly=true;
+            priceInputElement.value = item.price;
+            priceInputElement.name='pizzaPrice'+'-'+item.name;
+            priceInputElement.className='pizza-price';
+
+            // Changeable by the user
+            const qtyInputElement = document.createElement('input');
+            qtyInputElement.type='number';
+            qtyInputElement.readOnly=false;
+            qtyInputElement.value = 0;
+            qtyInputElement.name='pizzaQty'+'-'+item.name;
+            qtyInputElement.className='pizza-qty';
+
+            // Create table rows
+            rowElement.appendChild(emailInputElement);
+            rowElement.appendChild(nameElement);
+            nameElement.appendChild(nameInputElement)
+            rowElement.appendChild(ingredientsElement);
+            rowElement.appendChild(priceElement);
+            priceElement.appendChild(priceInputElement);
+            rowElement.appendChild(qtyElement);
+            qtyElement.appendChild(qtyInputElement);
+            tBodyElement.appendChild(rowElement);
+          });
+        }
+      } else {
+        app.errorMessage("Error: "+statusCode+" - error loading menu data.");
+      }
+    });
+  } else {
+    app.errorMessage("Your email creditantial is missing.");
+  }
+};
+
 app.loadAccountEditPageContent = function(){
   var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
   if(email){
-    // Fetch the user data
+    // Fetch the menu data
     var queryStringObject = {
       email
     };
@@ -625,7 +764,7 @@ app.loadAccountEditPageContent = function(){
           formElement.appendChild(hiddenInputElement)
         }
       } else {
-        app.errorMessage("Error: "+statusCode+" - Something went wrong when communicating with the server.")
+        app.errorMessage("Error: "+statusCode+" - error loading user data.")
       }
     });
   } else {
@@ -641,20 +780,15 @@ app.loadAccountDeletePageContent = function(){
       email
     };
    
-  
     const emailInputElement=document.querySelector('#accountDelete [name="email"]');
-    console.log('DDELETE ELEMENTS ---',email,'++')
     emailInputElement.value=email;
-          // Placing the hidden method to the form to handle the PUT request
-          const hiddenInputElement=document.createElement('input');
-          hiddenInputElement.type='hidden';
-          hiddenInputElement.name='_method';
-          hiddenInputElement.value='DELETE';
-          const formElement=document.querySelector('#accountDelete')
-          console.log('ELEMENTS',hiddenInputElement,
-            formElement
-          )
-          formElement.appendChild(hiddenInputElement)
+    // Placing the hidden method to the form to handle the PUT request
+    const hiddenInputElement=document.createElement('input');
+    hiddenInputElement.type='hidden';
+    hiddenInputElement.name='_method';
+    hiddenInputElement.value='DELETE';
+    const formElement=document.querySelector('#accountDelete')
+    formElement.appendChild(hiddenInputElement)
        
   } else {
     app.errorMessage("Your email creditantial is missing.")

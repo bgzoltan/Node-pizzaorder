@@ -50,11 +50,13 @@ button a {
   text-decoration: none;
 }
 
+
+ /* TABLE STYLE */
+
 .scrollable-table {
   table-layout: fixed;
   background-color:  rgb(186, 55, 7);
 }
-
 
 .scrollable-table td,
 .scrollable-table th {
@@ -67,6 +69,11 @@ button a {
   border-collapse: collapse;
   display: table;
   table-layout: fixed;
+}
+
+.scrollable-table input:read-only{
+  color:beige;
+  background-color: rgb(186, 55, 7);
 }
 
 .scrollable-table tbody {
@@ -85,12 +92,27 @@ button a {
   border-radius: 4px;
 }
 
+.scrollable-table input {
+  padding: 0px;
+  border: 0px;
+  /* font-weight: bold; */
+}
+
 .pizzaName {
   width: 10rem;
 }
 
+.pizzaName input {
+  width:7rem;
+}
+
+
 .pizzaIngredients {
   width: 34rem;
+}
+
+.pizzaIngredients input {
+  width: 30rem;
 }
 
 .pizzaPrice {
@@ -98,6 +120,24 @@ button a {
   text-align: right;
 }
 
+.pizzaPrice input {
+  width: 2rem;
+  text-align: right;
+}
+
+.pizzaQty {
+  width: 5rem;
+  text-align: right;
+}
+
+.pizzaQty input {
+  width: 2rem;
+  text-align: right;
+}
+
+
+
+/*    */
 
 .wrapperVertical {
   display: flex;
@@ -230,6 +270,8 @@ input {
   border-width: 1px;
   border-radius: 2px;
   padding: 2px;
+  font-family: "Sour Gummy", sans-serif;
+  font-size:medium;
 }
 
 .inputLabel {
