@@ -144,9 +144,9 @@ app.bindForms = function () {
           const pizzaOrders = [];
 
           rowElements.forEach((row) => {
-            const nameInputElement = rowElements.querySelector('input.pizza-name');
-            const priceInputElement = rowElements.querySelector('input.pizza-price');
-            const qtyInputElement = rowElements.querySelector('input.pizza-qty');
+            const nameInputElement = row.querySelector('input.pizza-name');
+            const priceInputElement = row.querySelector('input.pizza-price');
+            const qtyInputElement = row.querySelector('input.pizza-qty');
 
             if (qtyInputElement && parseInt(qtyInputElement.value) > 0) {
               const pizza = {
@@ -179,7 +179,7 @@ app.bindForms = function () {
                   : "Error during API request.";
 
               // Set the formError field with the error text
-              app.errorMessage(error);
+              app.message(error,'error');
             } else {
               // If successful, send to form response processor
               app.formResponseProcessor(formId, payload, responsePayload);
@@ -192,23 +192,50 @@ app.bindForms = function () {
 };
 
 // Create an info message for the user
-app.message = (messageText) => {
-  const infoMessage={
-    content: messageText,
-    expiresAt: Date.now() + 1000 * 5 // the message appears for 8 seconds
-  };
-  localStorage.setItem('infoMessage',JSON.stringify(infoMessage))
+app.message = (messageText,type) => {
+  const messageModalElement=document.querySelector('#messageModal');
+  const buttonElement=document.createElement('button');
+  buttonElement.className='buttonFirst';
+  buttonElement.innerText='OK';
+  messageModalElement.appendChild(buttonElement);
+
+  let message = document.querySelector("#messageModal #messageInfo");
+  message.innerText = messageText;
+
+  if (type=='error') {
+    messageModalElement.setAttribute('class','errorModal');
+  } else {
+    messageModalElement.setAttribute('class','messageModal');
+  }
+
+  buttonElement.addEventListener('click',(event)=>{
+    messageModalElement.removeAttribute('class');
+    message.innerText='';
+    buttonElement.remove();
+  })
 };
 
 
 // Create an error message for the user
-app.errorMessage = (messageText) => {
-  const errorMessage={
-    content: messageText,
-    expiresAt: Date.now() + 1000 * 5 // the message appears for 8 seconds
-  };
-  localStorage.setItem('errorMessage',JSON.stringify(errorMessage))
-};
+// app.errorMessage = (messageText) => {
+//   const messageModalElement=document.querySelector('#errorModal');
+//   const buttonElement=document.createElement('button');
+//   buttonElement.className='buttonFirst';
+//   buttonElement.innerText='OK'
+//   messageModalElement.appendChild(buttonElement);
+//   const errorMessage={
+//     content: messageText,
+//     expiresAt: Date.now() + 1000 * 20 // the message appears for 8 seconds
+//   };
+//   localStorage.setItem('errorMessage',JSON.stringify(errorMessage))
+//   buttonElement.addEventListener('click',(event)=>{
+//     console.log('CLICKED')
+//     buttonElement.remove();
+//   })
+
+  
+
+// };
 
 // Form response processor
 app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
@@ -230,11 +257,11 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
       newPayload,
       function (newStatusCode, newResponsePayload) {
         if (newStatusCode !== 200) {
-          app.errorMessage("Sorry, an error has occured. Please try again.");
+          app.message("Sorry, an error has occured. Please try again.",'error');
         } else {
           // If successful, set the token in the local storage and redirect the user
           app.setSessionToken(newResponsePayload);
-          app.message("You have signed up successfully.");
+          app.message("You have signed up successfully.",'info');
         }
       }
     );
@@ -242,18 +269,17 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
   // If login was successful, set the token in local storage and redirect the user
   if (formId == "login") {
     app.setSessionToken(responsePayload);
-    app.message("You have logged in successfully.");
+    app.message("You have logged in successfully.",'info');
   }
 
  // Messages to the user on successfull FORM activities
    if (formId=='accountEdit') 
-      app.message('Account updated successfully.')
+      app.message('Account updated successfully.','info')
 
 
   if(formId == 'accountDelete'){
     app.logoutProcess();
     window.location = '/account/delete';
-    app.message('Account deleted successfully.')
   }
 };
 
@@ -295,17 +321,17 @@ app.logoutProcess = () => {
             typeof responsePayload.Error == "string"
               ? responsePayload.Error
               : "Error during API request.";
-          app.errorMessage(error);
+          app.message(error,'error');
         } else {
           app.deleteSessionToken();
           app.setLoggedInClass(false);
-          app.message('You have logged out successfully.');
+          app.message('You have logged out successfully.','info');
           clearInterval(inactiveTime);
         }
       }
     );
   } else {
-    app.errorMessage("Could not logout.");
+    app.message("Could not logout.","error");
   }
 };
 
@@ -387,13 +413,12 @@ app.renewToken = function (callback) {
       undefined,
       payload,
       function (statusCode, responsePayload) {
-        // Display an error on the form if needed
         if (statusCode == 200) {
+          // Token has renewed
           app.setSessionToken(responsePayload);
-          app.message("Token has renewed.");
           callback(false);
         } else {
-          app.errorMessage(responsePayload["Error"]);
+          app.message(responsePayload["Error"],"error");
           callback(true);
         }
       }
@@ -425,66 +450,39 @@ const inactiveTime = setInterval(() => {
 }, 1000 * 30); // Check every half minute
 
 
-const checkIfUserLoggedOut = setInterval(() => {
-  const email =
-    typeof app.config.sessionToken.email == "string"
-      ? app.config.sessionToken.email
-      : false;
+const checkIfUserLoggedOutByServer = setInterval(() => {
+  if (app.config.sessionToken){
+    const email =
+      typeof app.config.sessionToken.email == "string"
+        ? app.config.sessionToken.email
+        : false;
 
-  if (email) {
-    const queryStringObject = {
-      email
-    };
-    app.client.request(
-      undefined,
-      "api/logoutcheck",
-      "GET",
-      queryStringObject,
-      undefined,
-      function (statusCode, responsePayload) {
-        // Display an error on the form if needed
-        if (statusCode == 404) {
-          app.message("You have logged out by the server.");
-          localStorage.removeItem('token')
-          window.location.href='/account/login'
-        } else {
-          console.log(statusCode,responsePayload['Error']);
+    if (email) {
+      const queryStringObject = {
+        email
+      };
+      app.client.request(
+        undefined,
+        "api/logoutcheck",
+        "GET",
+        queryStringObject,
+        undefined,
+        function (statusCode, responsePayload) {
+          if (statusCode == 404) {
+            app.message("You have logged out by the server.","info");
+            localStorage.removeItem('token')
+            window.location.href='/account/login'
+          } else {
+            if (statusCode!=200 ) {
+              console.log(statusCode,'Error during logout cheking '+responsePayload['Error']);
+            }
+          }
         }
-      }
-    );
+      );
+    };
   };
-}, 1000 * 1); // 
-
-
-// Checking of user message in local storage every 2 seconds and display them
-const checkMessages = setInterval(() => {
-  const infoMessage=JSON.parse(localStorage.getItem('infoMessage'))
-  const errorMessage=JSON.parse(localStorage.getItem('errorMessage'))
-
-  if (infoMessage) {
-    let message = document.querySelector("#messageModal #messageInfo");
-    message.innerText = infoMessage.content;
-    const messageModalElement=document.querySelector('#messageModal');
-    messageModalElement.setAttribute('class','messageModal');
-    if (Date.now() > infoMessage.expiresAt) {
-      messageModalElement.removeAttribute('class');
-      localStorage.removeItem("infoMessage");
-      message.innerText='';
-    } 
-  }
-
-  if (errorMessage) {
-    let error= document.querySelector("#errorModal #errorInfo");
-    error.innerText = errorMessage.content;
-    const errorModalElement=document.querySelector('#errorModal');
-    errorModalElement.setAttribute('class','errorModal');
-    if (Date.now() > errorMessage.expiresAt) {
-      errorModalElement.removeAttribute('class');
-      localStorage.removeItem("errorModal");
-      error.innerText='';
-    } 
-  }
 }, 1000 * 1); 
+
 
 app.init = function () {
   const menuLinksH = document.querySelectorAll(".menuLink a");
@@ -611,11 +609,11 @@ app.loadMenuListPageContent = function(){
           });
         }
       } else {
-        app.errorMessage("Error: "+statusCode+" - Something went wrong when communicating with the server.")
+        app.message("Error: "+statusCode+" - Something went wrong when communicating with the server.","error")
       }
     });
   } else {
-    app.errorMessage("Your email creditantial is missing.")
+    app.message("Your email creditantial is missing.","error")
   }
 };
 
@@ -720,11 +718,11 @@ app.loadMenuOrderPageContent = function(){
           });
         }
       } else {
-        app.errorMessage("Error: "+statusCode+" - error loading menu data.");
+        app.message("Error: "+statusCode+" - error loading menu data.","error");
       }
     });
   } else {
-    app.errorMessage("Your email creditantial is missing.");
+    app.message("Your email creditantial is missing.","error");
   }
 };
 
@@ -764,11 +762,11 @@ app.loadAccountEditPageContent = function(){
           formElement.appendChild(hiddenInputElement)
         }
       } else {
-        app.errorMessage("Error: "+statusCode+" - error loading user data.")
+        app.message("Error: "+statusCode+" - error loading user data.","error")
       }
     });
   } else {
-    app.errorMessage("Your email creditantial is missing.")
+    app.message("Your email creditantial is missing.","error")
   }
 };
 
@@ -791,7 +789,7 @@ app.loadAccountDeletePageContent = function(){
     formElement.appendChild(hiddenInputElement)
        
   } else {
-    app.errorMessage("Your email creditantial is missing.")
+    app.message("Your email creditantial is missing.","error")
   }
 };
 

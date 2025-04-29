@@ -638,7 +638,7 @@ handlers._tokens.post = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "invalid token." });
+      callback(400, { Error: "Invalid username or password." });
     }
   }
 };

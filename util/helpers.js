@@ -374,20 +374,16 @@ export function addUniversalTemplates (templateData,templateVariables,callback){
     if(!err && headerString){
       getTemplate('_message',templateVariables,function(err,messageString){
         if(!err && messageString){
-          getTemplate('_error',templateVariables,function(err,errorString){
-            if(!err && errorString){
-              getTemplate('_footer',templateVariables,function(err,footerString){
-                if(!err && headerString){
-                  // Add header and footer to page
-                  var fullString = headerString+templateData+messageString+errorString+footerString;
-                  callback(false,fullString);
-                } else {
-                  callback('Could not find the footer template');
-                }
-              });
-            };
+          getTemplate('_footer',templateVariables,function(err,footerString){
+            if(!err && headerString){
+              // Add header and footer to page
+              var fullString = headerString+templateData+messageString+footerString;
+              callback(false,fullString);
+            } else {
+              callback('Could not find the footer template');
+            }
           });
-       };
+        };
       });
     } else {
       callback('Could not find the header template');
