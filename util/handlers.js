@@ -807,7 +807,7 @@ handlers._menu.get = (data, callback) => {
 handlers._shoppingcart = {};
 
 handlers.shoppingcart = (data, callback) => {
-  if (isAcceptableMethod(["POST", "PUT", "DELETE"], data)) {
+  if (isAcceptableMethod(["POST", "PUT", "DELETE","GET"], data)) {
     handlers._shoppingcart[data.method](data, callback);
   } else {
     callback(405, { Error: "this request method is not allowed." });
@@ -996,13 +996,63 @@ handlers._shoppingcart.put = (data, callback) => {
   }
 };
 
-// DELETE SHOPPING CART
-handlers._shoppingcart.delete = (data, callback) => {
+handlers._shoppingcart.get = (data, callback) => {
   const { query } = data;
   const email =
     typeof query.email == "string" && isValidEmail(query.email)
       ? query.email
       : false;
+  if (email) {
+    const tokenId =
+      typeof data.headers.token === "string" && data.headers.token.length == 20
+        ? data.headers.token
+        : false;
+    if (tokenId) {
+      isValidNotExpiredToken(tokenId, email, function (err) {
+        if (!err) {
+          
+          // Checking whether the user already has a shopping cart
+          dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
+            if (!err && shoppingCartData) {
+              callback(false,shoppingCartData)
+            } else {
+              if (err==404) {
+                callback(err, {
+                  Error:
+                    "Shopping cart is empty."
+                });
+              } else {
+                callback(err, {
+                  Error:
+                    "Shopping cart:" +
+                    shoppingCartData["Error"],
+                });
+              }
+            }
+          });
+        } else {
+          callback(403, {
+            Error: err,
+          });
+        }
+      })
+    } else {
+      callback(400, { Error: "missing or invalid token." });
+    }
+  } else {
+    callback(400, { Error: "missing data." });
+  }
+};
+
+// DELETE SHOPPING CART
+handlers._shoppingcart.delete = (data, callback) => {
+  const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
+
+  const email =
+    typeof payload.email == "string" && isValidEmail(payload.email)
+      ? payload.email
+      : false;
+
   if (email) {
     const tokenId =
       typeof data.headers.token === "string" && data.headers.token.length == 20
@@ -1033,6 +1083,19 @@ handlers._shoppingcart.delete = (data, callback) => {
   }
 };
 
+handlers._order={};
+
+
+handlers.order = (data, callback) => {
+  if (isAcceptableMethod(["POST"], data)) {
+    handlers._order[data.method](data, callback);
+  } else {
+    callback(405, { Error: "this request method is not allowed." });
+  }
+};
+
+
+
 // ORDER AND PAYMENT BY CARD
 // sample payment payload in json:
 // {
@@ -1044,7 +1107,7 @@ handlers._shoppingcart.delete = (data, callback) => {
 //     "exp_year": 2025,
 //     "cvc": "123"}
 // }
-handlers.order = (data, callback) => {
+handlers._order.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
   if (payload) {

@@ -135,6 +135,19 @@ button a {
   text-align: right;
 }
 
+.totalContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content:flex-end;
+  background-color: red;
+  color:white;
+  font-weight: bold;
+  font-family: "Sour Gummy", sans-serif;
+  padding-right: 2rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
 
 
 /*    */

@@ -266,18 +266,22 @@ export function sendEmailMessage(email, subject, htmlMessage, callback) {
 export function summarizeOrderItems(items, callback) {
   let total = 0;
   let error = false;
-  for (const item of items) {
-    const itemName =
-      typeof item.name == "string" && item.name.length > 0 ? item.name : false;
-    const itemQty =
-      typeof item.qty == "number" && item.qty > 0 ? item.qty : false;
-    const itemPrice =
-      typeof item.price == "number" && item.price > 0 ? item.price : false;
-    if (itemName && itemQty && itemPrice) {
-      total += item.price * item.qty;
-    } else {
-      error = true;
+  if (items) {
+    for (const item of items) {
+      const itemName =
+        typeof item.name == "string" && item.name.length > 0 ? item.name : false;
+      const itemQty =
+        typeof item.qty == "number" && item.qty > 0 ? item.qty : false;
+      const itemPrice =
+        typeof item.price == "number" && item.price > 0 ? item.price : false;
+      if (itemName && itemQty && itemPrice) {
+        total += item.price * item.qty;
+      } else {
+        error = true;
+      }
     }
+  } else {
+    error=true;
   }
   if (error) {
     callback(400, { Error: "missing or invalid data in items." });

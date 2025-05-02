@@ -69,7 +69,6 @@ pizzaServer.unifiedServer = (req, res) => {
     const handlerCallback = (statusCode, payload, contentType = "json") => {
       try {
         statusCode = typeof statusCode == "number" ? statusCode : 200;
-
         let payloadString = "";
         let headers = { "Content-Type": "application/json" };
 
@@ -77,7 +76,9 @@ pizzaServer.unifiedServer = (req, res) => {
           payload = typeof payload == "object" ? payload : {};
           payloadString = JSON.stringify(payload);
         }
-        if (payload._method) {data.method='PUT'; delete payload._method}
+
+
+        if (payload._method) {data.method=payload._method; delete payload._method}
 
         if (contentType == "html") {
           headers = { "Content-Type": "text/html" };
@@ -110,6 +111,7 @@ pizzaServer.unifiedServer = (req, res) => {
           payloadString = payload;
         }
 
+  
         res.writeHead(statusCode, headers);
         res.end(payloadString);
       } catch (error) {

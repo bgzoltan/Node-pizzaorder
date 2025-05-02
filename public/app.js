@@ -81,13 +81,12 @@ app.client.request = (
   xhr.onreadystatechange = () => {
     if (xhr.readyState == "3" || xhr.readyState == "4") {
       // 3=Response loading, 4=Response done
+ 
       if (xhr.readyState == "3") {
         // Not to overwrite the the status
         const statusCode = xhr.status;
         const statusText = xhr.statusText;
         const responseReturned = xhr.responseText;
-
-       
 
         // Callback (if there is a callback)
         if (callback) {
@@ -111,6 +110,7 @@ app.client.request = (
 
 // Bind the forms
 app.bindForms = function () {
+
   if (document.querySelector("form")) {
     var allForms = document.querySelectorAll("form");
     for(var i = 0; i < allForms.length; i++){
@@ -137,7 +137,10 @@ app.bindForms = function () {
 
         if (formId=='menuOrder') {
           // Forming the payload object according to the shopping cart API
-          payload={};
+          // Dont remove the 'hidden' methods
+       
+          if (payload._method) payload={_method:payload._method};
+    
           const tableBodyElement = document.querySelector('.scrollable-table tbody');
           const rowElements = tableBodyElement.querySelectorAll('tr');
 
@@ -159,19 +162,22 @@ app.bindForms = function () {
           });
           const emailInputElement=document.querySelector('[name="user-email"]')
           // Formatted payload
-          payload={email:emailInputElement.value, items:pizzaOrders}
+          payload={...payload,email:emailInputElement.value, items:pizzaOrders}
+       
         };
 
         // Call the appropriate API
+        const modifiedPayload={...payload}
         app.client.request(
           undefined,
           path,
           method,
           undefined,
-          payload,
+          modifiedPayload,
           function (statusCode, responsePayload) {
             // Display an error on the form if needed
             if (statusCode !== 200 && statusCode !== 201) {
+          
               // Try to get the error from the api, or set a default error message
               var error =
                 typeof responsePayload.Error == "string"
@@ -191,53 +197,7 @@ app.bindForms = function () {
   }
 };
 
-// Create an info message for the user
-app.message = (messageText,type) => {
-  const messageModalElement=document.querySelector('#messageModal');
-  const buttonElement=document.createElement('button');
-  buttonElement.className='buttonFirst';
-  buttonElement.innerText='OK';
-  messageModalElement.appendChild(buttonElement);
-
-  let message = document.querySelector("#messageModal #messageInfo");
-  message.innerText = messageText;
-
-  if (type=='error') {
-    messageModalElement.setAttribute('class','errorModal');
-  } else {
-    messageModalElement.setAttribute('class','messageModal');
-  }
-
-  buttonElement.addEventListener('click',(event)=>{
-    messageModalElement.removeAttribute('class');
-    message.innerText='';
-    buttonElement.remove();
-  })
-};
-
-
-// Create an error message for the user
-// app.errorMessage = (messageText) => {
-//   const messageModalElement=document.querySelector('#errorModal');
-//   const buttonElement=document.createElement('button');
-//   buttonElement.className='buttonFirst';
-//   buttonElement.innerText='OK'
-//   messageModalElement.appendChild(buttonElement);
-//   const errorMessage={
-//     content: messageText,
-//     expiresAt: Date.now() + 1000 * 20 // the message appears for 8 seconds
-//   };
-//   localStorage.setItem('errorMessage',JSON.stringify(errorMessage))
-//   buttonElement.addEventListener('click',(event)=>{
-//     console.log('CLICKED')
-//     buttonElement.remove();
-//   })
-
-  
-
-// };
-
-// Form response processor
+// Form RESPONSE processor
 app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
   const functionToCall = false;
 
@@ -266,6 +226,7 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
       }
     );
   }
+
   // If login was successful, set the token in local storage and redirect the user
   if (formId == "login") {
     app.setSessionToken(responsePayload);
@@ -281,6 +242,38 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
     app.logoutProcess();
     window.location = '/account/delete';
   }
+
+  if (formId=='menuOrder') {
+    const redirect='/action/menuorder'
+    if (requestPayload._method=='POST') app.message('The shopping cart is created.','info',redirect)
+    if (requestPayload._method=='PUT') app.message('The shopping cart is updated.','info',redirect)
+    if (requestPayload._method=='DELETE') app.message('The shopping cart is deleted.','info',redirect)
+  }
+};
+
+// Create an info message for the user
+app.message = (messageText,type,redirect='') => {
+  const messageModalElement=document.querySelector('#messageModal');
+  const buttonElement=document.createElement('button');
+  buttonElement.className='buttonFirst';
+  buttonElement.innerText='OK';
+  messageModalElement.appendChild(buttonElement);
+
+  let message = document.querySelector("#messageModal #messageInfo");
+  message.innerText = messageText;
+
+  if (type=='error') {
+    messageModalElement.setAttribute('class','errorModal');
+  } else {
+    messageModalElement.setAttribute('class','messageModal');
+  }
+
+  buttonElement.addEventListener('click',(event)=>{
+    messageModalElement.removeAttribute('class');
+    message.innerText='';
+    buttonElement.remove();
+    if (redirect) {window.location.href=redirect};
+  })
 };
 
 app.bindLogoutButton = () => {
@@ -626,97 +619,213 @@ app.loadMenuOrderPageContent = function(){
       email
     };
     app.client.request(undefined,'api/menu','GET',queryStringObject,undefined,function(statusCode,responsePayload){
-      if(statusCode == 200 && responsePayload){
-        const pizzaList=responsePayload.items instanceof Array ? responsePayload.items:false
  
-        if (pizzaList) {
-          const tableContainerElement=document.querySelector('.scrollable-table');
+      if(statusCode == 200 && responsePayload){
+        // Checking if the user has a saved shopping cart
+        app.client.request(undefined,'api/shoppingcart','GET',queryStringObject,undefined,function(statusCode,shoppingCartData){
+          if(statusCode==200 || statusCode==404) {
+            let totalQty=0;
+            let totalPrice=0;
+            if (shoppingCartData.items) {
+              totalQty=shoppingCartData.items.reduce((prev,curr)=> {return prev+curr.qty},0);
+              totalPrice=shoppingCartData.items.reduce((prev,curr)=> {return prev+(curr.price*curr.qty)},0);
+            }
+            const pizzaList=responsePayload.items instanceof Array ? responsePayload.items:false
+            if (pizzaList) {
+              const formElement=document.querySelector('form');
+    
+              // Buttons
+              const buttonsContainer=document.createElement('div');
+              buttonsContainer.style='display: flex; gap:0.5rem';
+              const createShoppingCartSubmitButton=document.createElement('button');
+              createShoppingCartSubmitButton.id='createCart';
+              createShoppingCartSubmitButton.className='buttonFirst';
+              createShoppingCartSubmitButton.type='submit';
+              createShoppingCartSubmitButton.innerText='1. Create shopping cart';
+              const updateShoppingCartSubmitButton=document.createElement('button');
+              updateShoppingCartSubmitButton.id='updateCart';
+              updateShoppingCartSubmitButton.className='buttonFirst';
+              updateShoppingCartSubmitButton.type='submit';
+              updateShoppingCartSubmitButton.innerText='2. Update shopping cart';
+              const deleteShoppingCartSubmitButton=document.createElement('button');
+              deleteShoppingCartSubmitButton.id='deleteCart';
+              deleteShoppingCartSubmitButton.className='buttonFirst';
+              deleteShoppingCartSubmitButton.type='submit';
+              deleteShoppingCartSubmitButton.innerText='3. Empty shopping cart';
+    
+              const hiddenInputElement=document.createElement('input');
+              hiddenInputElement.type='hidden';
+              hiddenInputElement.name='_method';
+              formElement.appendChild(hiddenInputElement);
+    
+              // Handling buttons
+              createShoppingCartSubmitButton.addEventListener('click',(event)=>{
+                hiddenInputElement.value='POST';
+              });
+    
+              updateShoppingCartSubmitButton.addEventListener('click',(event)=>{
+                hiddenInputElement.value='PUT';
+              });
+    
+              deleteShoppingCartSubmitButton.addEventListener('click',(event)=>{
+                hiddenInputElement.value='DELETE';
+              });
+    
+              buttonsContainer.appendChild(createShoppingCartSubmitButton);
+              buttonsContainer.appendChild(updateShoppingCartSubmitButton);
+              buttonsContainer.appendChild(deleteShoppingCartSubmitButton);
+              formElement.appendChild(buttonsContainer);
+              const tableContainerElement=document.querySelector('.scrollable-table');
+    
+              // Creating table
+              const tableElement=document.createElement('table');
+              const tHeadElement=document.createElement('thead');
+              const tBodyElement=document.createElement('tbody');
+              
+              // Create header rows
+              const hRowElement=document.createElement('tr');
+              const hNameElement=document.createElement('th');
+              hNameElement.innerText='Name'
+              hNameElement.className='pizzaName';
+              const hIngredientsElement=document.createElement('th');
+              hIngredientsElement.innerText='Ingredients'
+              hIngredientsElement.className='pizzaIngredients';
+              const hPriceElement=document.createElement('th');
+              hPriceElement.innerText='Price'
+              hPriceElement.className='pizzaPrice';
+              // Extending the table with quantity column
+              const hQtyElement=document.createElement('th');
+              hQtyElement.innerText='Qty'
+              hQtyElement.className='pizzaQty';
+    
+              // Creating table structure
+              tableContainerElement.appendChild(tableElement);
+              tableElement.appendChild(tHeadElement);
+              tableElement.appendChild(tBodyElement);
+              tHeadElement.appendChild(hRowElement);
+              hRowElement.appendChild(hNameElement);
+              hRowElement.appendChild(hIngredientsElement);
+              hRowElement.appendChild(hPriceElement);
+              hRowElement.appendChild(hQtyElement);
 
-          // Creating table
-          const tableElement=document.createElement('table');
-          const tHeadElement=document.createElement('thead');
-          const tBodyElement=document.createElement('tbody');
-          
-          // Create header rows
-          const hRowElement=document.createElement('tr');
-          const hNameElement=document.createElement('th');
-          hNameElement.innerText='Name'
-          hNameElement.className='pizzaName';
-          const hIngredientsElement=document.createElement('th');
-          hIngredientsElement.innerText='Ingredients'
-          hIngredientsElement.className='pizzaIngredients';
-          const hPriceElement=document.createElement('th');
-          hPriceElement.innerText='Price'
-          hPriceElement.className='pizzaPrice';
-          // Extending the table with quantity column
-          const hQtyElement=document.createElement('th');
-          hQtyElement.innerText='Qty'
-          hQtyElement.className='pizzaQty';
+              let count=0;
+              pizzaList.forEach((listItem,index) => {
+                // Create a table row
+                const rowElement = document.createElement('tr');
+                const nameElement = document.createElement('td');
+                const ingredientsElement = document.createElement('td');
+                const priceElement = document.createElement('td');
+                const qtyElement = document.createElement('td');
+                nameElement.className='pizzaName';
 
-          // Creating table structure
-          tableContainerElement.appendChild(tableElement);
-          tableElement.appendChild(tHeadElement);
-          tableElement.appendChild(tBodyElement);
-          tHeadElement.appendChild(hRowElement);
-          hRowElement.appendChild(hNameElement);
-          hRowElement.appendChild(hIngredientsElement);
-          hRowElement.appendChild(hPriceElement);
-          hRowElement.appendChild(hQtyElement);
-          pizzaList.forEach((item) => {
-            // Create a table row
-            const rowElement = document.createElement('tr');
-            const nameElement = document.createElement('td');
-            const ingredientsElement = document.createElement('td');
-            const priceElement = document.createElement('td');
-            const qtyElement = document.createElement('td');
-            nameElement.className='pizzaName';
-            ingredientsElement.textContent = item.ingredients;
-            ingredientsElement.className='pizzaIngredients';
-            priceElement.className='pizzaPrice';
-            qtyElement.className='pizzaQty';
-         
+                ingredientsElement.textContent = listItem.ingredients;
+                ingredientsElement.className='pizzaIngredients';
+                priceElement.className='pizzaPrice';
+                qtyElement.className='pizzaQty';
+             
+    
+                // Create input elements to pass data to the form
+                const emailInputElement = document.createElement('input'); // for shoppingcart API to send user email
+                emailInputElement.type='hidden';
+                emailInputElement.name='user-email';
+                emailInputElement.value=app.config.sessionToken.email;
+    
+                // Read only elements
+                const nameInputElement = document.createElement('input');
+                nameInputElement.type='text';
+                nameInputElement.readOnly=true;
+                nameInputElement.name='pizzaName'+'-'+listItem.name;
+                nameInputElement.className='pizza-name';
+                nameInputElement.value = listItem.name;
+    
+                const priceInputElement = document.createElement('input');
+                priceInputElement.type='text';
+                priceInputElement.readOnly=true;
+                priceInputElement.value = listItem.price;
+                priceInputElement.name='pizzaPrice'+'-'+listItem.name;
+                priceInputElement.className='pizza-price';
+    
+                // QTY - Changeable by the user, loading the saved shopping cart if exists
+                const qtyInputElement = document.createElement('input');
+                qtyInputElement.type='number';
+                qtyInputElement.readOnly=false;
+                qtyInputElement.name='pizzaQty'+'-'+listItem.name;
+                qtyInputElement.className='pizza-qty';
+                qtyInputElement.placeholder = '0';
+                qtyInputElement.min=0;
+                qtyInputElement.step=1;
+                qtyInputElement.max=5;
+                rowElement.setAttribute('data-index',index);
+                let prevValue='0';
 
-            // Create input elements to pass data to the form
-            const emailInputElement = document.createElement('input'); // for shoppingcart API to send user email
-            emailInputElement.type='hidden';
-            emailInputElement.name='user-email';
-            emailInputElement.value=app.config.sessionToken.email;
+               
+                
+                // Create table rows
+                rowElement.appendChild(emailInputElement);
+                rowElement.appendChild(nameElement);
+                nameElement.appendChild(nameInputElement)
+                rowElement.appendChild(ingredientsElement);
+                rowElement.appendChild(priceElement);
+                priceElement.appendChild(priceInputElement);
+                rowElement.appendChild(qtyElement);
+                qtyElement.appendChild(qtyInputElement);
+                tBodyElement.appendChild(rowElement); 
+                
+                 // Create total
+                 if (count==0) {
+                  count=1; // Create element just once
+                  const totalContainerElement=document.createElement('div')
+                  totalContainerElement.className='totalContainer'
+                  const totalQtyElement=document.createElement('div');
+                  totalQtyElement.className='pizzaQty';
+                  totalQtyElement.id='totalQty';
+                  totalQtyElement.innerText=totalQty;
+                  const totalPriceElement=document.createElement('div');
+                  totalPriceElement.innerText=totalPrice;
+                  totalPriceElement.className='pizzaPrice';
+                  totalPriceElement.id='totalPrice';
+                  const totalTitleElement=document.createElement('div');
+                  totalTitleElement.innerText='Total value and qty:';
+                  totalTitleElement.className='pizzaIngredients';
+                  totalContainerElement.appendChild(totalTitleElement);  
+                  totalContainerElement.appendChild(totalPriceElement);
+                  totalContainerElement.appendChild(totalQtyElement);
+                  tableContainerElement.appendChild(totalContainerElement);
+                 }
+            
+       
+              qtyInputElement.addEventListener('keydown',(event)=>{
+                prevValue=event.target.value ? event.target.value:'0';
+              })
 
-            // Read only elements
-            const nameInputElement = document.createElement('input');
-            nameInputElement.type='text';
-            nameInputElement.readOnly=true;
-            nameInputElement.name='pizzaName'+'-'+item.name;
-            nameInputElement.className='pizza-name';
-            nameInputElement.value = item.name;
-
-            const priceInputElement = document.createElement('input');
-            priceInputElement.type='text';
-            priceInputElement.readOnly=true;
-            priceInputElement.value = item.price;
-            priceInputElement.name='pizzaPrice'+'-'+item.name;
-            priceInputElement.className='pizza-price';
-
-            // Changeable by the user
-            const qtyInputElement = document.createElement('input');
-            qtyInputElement.type='number';
-            qtyInputElement.readOnly=false;
-            qtyInputElement.value = 0;
-            qtyInputElement.name='pizzaQty'+'-'+item.name;
-            qtyInputElement.className='pizza-qty';
-
-            // Create table rows
-            rowElement.appendChild(emailInputElement);
-            rowElement.appendChild(nameElement);
-            nameElement.appendChild(nameInputElement)
-            rowElement.appendChild(ingredientsElement);
-            rowElement.appendChild(priceElement);
-            priceElement.appendChild(priceInputElement);
-            rowElement.appendChild(qtyElement);
-            qtyElement.appendChild(qtyInputElement);
-            tBodyElement.appendChild(rowElement);
-          });
-        }
+              // Calculating total qty and total price;
+              qtyInputElement.addEventListener('input',(event)=>{
+                currValue=event.target.value ? event.target.value:'0';
+                totalQty=totalQty-parseInt(prevValue)+parseInt(currValue);
+                const index=rowElement.getAttribute('data-index')
+                totalPrice=totalPrice-parseInt(prevValue)*pizzaList[index].price+parseInt(currValue)*pizzaList[index].price;
+                const totalQtyElement=document.getElementById('totalQty');
+                totalQtyElement.innerText=totalQty;
+                const totalPriceElement=document.getElementById('totalPrice');
+                totalPriceElement.innerText=totalPrice;
+              })
+              if (shoppingCartData.items) {
+                shoppingCartData.items.forEach((savedItem)=>{
+                  if (savedItem.name==listItem.name) {
+                    qtyInputElement.setAttribute('value',savedItem.qty);
+                  } 
+                })
+              }
+                
+              });
+              
+             
+            }
+     
+          } else {
+            app.message('Error reading shoppingcart data.','error')
+          }
+        })
       } else {
         app.message("Error: "+statusCode+" - error loading menu data.","error");
       }
