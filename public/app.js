@@ -135,7 +135,7 @@ app.bindForms = function () {
           }
         }
 
-        if (formId=='menuOrder') {
+        if (formId=='shoppingCart') {
           // Forming the payload object according to the shopping cart API
           // Dont remove the 'hidden' methods
        
@@ -166,6 +166,49 @@ app.bindForms = function () {
        
         };
 
+        if (formId=='order') {
+          // Forming the payload object according to the order API
+          // Dont remove the 'hidden' methods
+
+          if (payload._method) payload={_method:payload._method};
+
+          const tableBodyElement = document.querySelector('.scrollable-table tbody');
+          const rowElements = tableBodyElement.querySelectorAll('tr');
+
+          const pizzaOrders = [];
+
+          rowElements.forEach((row) => {
+            const nameInputElement = row.querySelector('input.pizza-name');
+            const priceInputElement = row.querySelector('input.pizza-price');
+            const qtyInputElement = row.querySelector('input.pizza-qty');
+
+            if (qtyInputElement && parseInt(qtyInputElement.value) > 0) {
+              const pizza = {
+                name: nameInputElement.value,
+                price: parseInt(priceInputElement.value),
+                qty: parseInt(qtyInputElement.value)
+              };
+              pizzaOrders.push(pizza);
+            };
+          });
+
+          const email=document.querySelector('[name="user-email"]').value
+          
+          const card={
+            number: document.querySelector("#cardNumber").value.split(" ").join(""),
+            exp_month: parseInt(document.querySelector("#expMonth").value),
+            exp_year: parseInt(document.querySelector('#expYear').value),
+            cvc: document.querySelector('#cvc').value,
+          }
+
+          const currency='AUD';
+
+          const amount=parseInt(document.querySelector('#totalPrice').innerText);
+          // Formatted payload
+          payload={...payload,email,amount,currency,card}
+       
+        };
+
         // Call the appropriate API
         const modifiedPayload={...payload}
         app.client.request(
@@ -184,7 +227,6 @@ app.bindForms = function () {
                   ? responsePayload.Error
                   : "Error during API request.";
 
-              // Set the formError field with the error text
               app.message(error,'error');
             } else {
               // If successful, send to form response processor
@@ -243,8 +285,8 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
     window.location = '/account/delete';
   }
 
-  if (formId=='menuOrder') {
-    const redirect='/action/menuorder'
+  if (formId=='shoppingCart') {
+    const redirect='/action/shoppingcart'
     if (requestPayload._method=='POST') app.message('The shopping cart is created.','info',redirect)
     if (requestPayload._method=='PUT') app.message('The shopping cart is updated.','info',redirect)
     if (requestPayload._method=='DELETE') app.message('The shopping cart is deleted.','info',redirect)
@@ -281,6 +323,31 @@ app.bindLogoutButton = () => {
   logoutButton.addEventListener("click", (event) => {
     event.preventDefault();
     app.logoutProcess();
+  });
+};
+
+// Control the hamburger menu in responsive mode
+app.bindHamburgerIcon = () => {
+  const hamburgerIcon = document.querySelector("#hamburgerIcon");
+  let open=false;
+  hamburgerIcon.addEventListener(["click"], (event) => {
+    event.preventDefault();
+    const navElement=document.querySelector('nav')
+    open=open ? false:true;
+    if (open ) {
+      navElement.style='display:flex'
+    } else {
+      navElement.style='display:none'
+    }
+  });
+
+  hamburgerIcon.addEventListener(["resize"], (event) => {
+    event.preventDefault();
+    const navElement=document.querySelector('nav')
+    const viewportWidth = window.innerWidth;
+    if (viewportWidth>=600) {
+      navElement.style='display:flex'
+    } 
   });
 };
 
@@ -496,6 +563,7 @@ app.init = function () {
   // Bind all form submissions
   app.bindForms();
   app.bindLogoutButton();
+  app.bindHamburgerIcon();
 
   // Get the token from localstorage
   app.getSessionToken();
@@ -526,9 +594,14 @@ app.loadDataOnPage = function(){
     app.loadMenuListPageContent();
   }
 
-  // Logic for loading menu order page
-  if(primaryClass == 'menuOrder'){
-    app.loadMenuOrderPageContent();
+  // Logic for loading shoppingcart page
+  if(primaryClass == 'shoppingCart'){
+    app.loadShoppingCartPageContent();
+  }
+
+  // Logic for loading order page
+  if(primaryClass == 'order'){
+    app.loadOrderPageContent();
   }
 
   // Logic for loading account edit page
@@ -610,7 +683,7 @@ app.loadMenuListPageContent = function(){
   }
 };
 
-app.loadMenuOrderPageContent = function(){
+app.loadShoppingCartPageContent = function(){
   // Get the email from the current token
   var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
   if(email){
@@ -636,22 +709,22 @@ app.loadMenuOrderPageContent = function(){
     
               // Buttons
               const buttonsContainer=document.createElement('div');
-              buttonsContainer.style='display: flex; gap:0.5rem';
+              buttonsContainer.className='buttonsContainer';
               const createShoppingCartSubmitButton=document.createElement('button');
               createShoppingCartSubmitButton.id='createCart';
-              createShoppingCartSubmitButton.className='buttonFirst';
+              createShoppingCartSubmitButton.className=totalQty==0 ? 'buttonFirst':'buttonSecond';
               createShoppingCartSubmitButton.type='submit';
-              createShoppingCartSubmitButton.innerText='1. Create shopping cart';
+              createShoppingCartSubmitButton.innerText='Create';
               const updateShoppingCartSubmitButton=document.createElement('button');
               updateShoppingCartSubmitButton.id='updateCart';
-              updateShoppingCartSubmitButton.className='buttonFirst';
+              updateShoppingCartSubmitButton.className=totalQty!==0 ? 'buttonFirst':'buttonSecond';
               updateShoppingCartSubmitButton.type='submit';
-              updateShoppingCartSubmitButton.innerText='2. Update shopping cart';
+              updateShoppingCartSubmitButton.innerText='Update';
               const deleteShoppingCartSubmitButton=document.createElement('button');
               deleteShoppingCartSubmitButton.id='deleteCart';
-              deleteShoppingCartSubmitButton.className='buttonFirst';
+              deleteShoppingCartSubmitButton.className=totalQty!==0 ? 'buttonFirst':'buttonSecond';
               deleteShoppingCartSubmitButton.type='submit';
-              deleteShoppingCartSubmitButton.innerText='3. Empty shopping cart';
+              deleteShoppingCartSubmitButton.innerText='Delete';
     
               const hiddenInputElement=document.createElement('input');
               hiddenInputElement.type='hidden';
@@ -776,18 +849,29 @@ app.loadMenuOrderPageContent = function(){
                   count=1; // Create element just once
                   const totalContainerElement=document.createElement('div')
                   totalContainerElement.className='totalContainer'
+
                   const totalQtyElement=document.createElement('div');
-                  totalQtyElement.className='pizzaQty';
+                  totalQtyElement.className='totalQty';
                   totalQtyElement.id='totalQty';
                   totalQtyElement.innerText=totalQty;
+
                   const totalPriceElement=document.createElement('div');
                   totalPriceElement.innerText=totalPrice;
-                  totalPriceElement.className='pizzaPrice';
+                  totalPriceElement.className='totalPrice';
                   totalPriceElement.id='totalPrice';
-                  const totalTitleElement=document.createElement('div');
-                  totalTitleElement.innerText='Total value and qty:';
-                  totalTitleElement.className='pizzaIngredients';
-                  totalContainerElement.appendChild(totalTitleElement);  
+
+                  const totalNameElement=document.createElement('div');
+                  totalNameElement.innerText='Total value and qty:';
+                  totalNameElement.className='totalName';
+                  totalNameElement.id='totalName';
+
+                  const totalIngredientsElement=document.createElement('div');
+                  totalIngredientsElement.innerText='';
+                  totalIngredientsElement.className='totalIngredients';
+                  totalIngredientsElement.id='totalIngredients';
+
+                  totalContainerElement.appendChild(totalNameElement);  
+                  totalContainerElement.appendChild(totalIngredientsElement); 
                   totalContainerElement.appendChild(totalPriceElement);
                   totalContainerElement.appendChild(totalQtyElement);
                   tableContainerElement.appendChild(totalContainerElement);
@@ -824,6 +908,213 @@ app.loadMenuOrderPageContent = function(){
      
           } else {
             app.message('Error reading shoppingcart data.','error')
+          }
+        })
+      } else {
+        app.message("Error: "+statusCode+" - error loading menu data.","error");
+      }
+    });
+  } else {
+    app.message("Your email creditantial is missing.","error");
+  }
+};
+
+app.loadOrderPageContent = function(){
+  // Get the email from the current token
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
+    // Fetch the menu data
+    var queryStringObject = {
+      email
+    };
+    app.client.request(undefined,'api/menu','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+ 
+      if(statusCode == 200 && responsePayload){
+        // Checking if the user has a saved shopping cart
+        app.client.request(undefined,'api/shoppingcart','GET',queryStringObject,undefined,function(statusCode,shoppingCartData){
+          const cardContainerEelement=document.querySelector("#creditCardContainer");
+          const cardContainerEelementTitle=document.querySelector("#creditCardContainerTitle");
+
+
+          if(statusCode==200) {
+            cardContainerEelement.style="display:grid";
+            cardContainerEelementTitle.style="display: grid";
+            let totalQty=0;
+            let totalPrice=0;
+            if (shoppingCartData.items) {
+              totalQty=shoppingCartData.items.reduce((prev,curr)=> {return prev+curr.qty},0);
+              totalPrice=shoppingCartData.items.reduce((prev,curr)=> {return prev+(curr.price*curr.qty)},0);
+            }
+
+            const pizzaList=responsePayload.items instanceof Array ? responsePayload.items:false
+            if (pizzaList) {
+              const formElement=document.querySelector('form');
+    
+              // Buttons
+              const buttonsContainer=document.createElement('div');
+              buttonsContainer.style='display: flex; gap:0.5rem';
+              const orderSubmitButton=document.createElement('button');
+              orderSubmitButton.id='sendOrder';
+              orderSubmitButton.className='buttonFirst';
+              orderSubmitButton.type='submit';
+              orderSubmitButton.innerText='Send your order';
+    
+              const hiddenInputElement=document.createElement('input');
+              hiddenInputElement.type='hidden';
+              hiddenInputElement.name='_method';
+              formElement.appendChild(hiddenInputElement);
+    
+              orderSubmitButton.addEventListener('click',(event)=>{
+                hiddenInputElement.value='POST';
+              });
+    
+              buttonsContainer.appendChild(orderSubmitButton);
+              formElement.appendChild(buttonsContainer);
+              const tableContainerElement=document.querySelector('.scrollable-table');
+    
+              // Creating table
+              const tableElement=document.createElement('table');
+              const tHeadElement=document.createElement('thead');
+              const tBodyElement=document.createElement('tbody');
+              
+              // Create header rows
+              const hRowElement=document.createElement('tr');
+              const hNameElement=document.createElement('th');
+              hNameElement.innerText='Name'
+              hNameElement.className='pizzaName';
+              const hPriceElement=document.createElement('th');
+              hPriceElement.innerText='Price'
+              hPriceElement.className='pizzaPrice';
+              // Extending the table with quantity column
+              const hQtyElement=document.createElement('th');
+              hQtyElement.innerText='Qty'
+              hQtyElement.className='pizzaQty';
+    
+              // Creating table structure
+              tableContainerElement.appendChild(tableElement);
+              tableElement.appendChild(tHeadElement);
+              tableElement.appendChild(tBodyElement);
+              tHeadElement.appendChild(hRowElement);
+              hRowElement.appendChild(hNameElement);
+              hRowElement.appendChild(hPriceElement);
+              hRowElement.appendChild(hQtyElement);
+
+              let count=0;
+
+              // Listing shopping cart items
+              shoppingCartData.items.forEach((listItem,index) => {
+                if (listItem.qty!==0) {
+
+                  // Create a table row
+                  const rowElement = document.createElement('tr');
+                  const nameElement = document.createElement('td');
+                  const priceElement = document.createElement('td');
+                  const qtyElement = document.createElement('td');
+                  nameElement.className='pizzaName';
+                  priceElement.className='pizzaPrice';
+                  qtyElement.className='pizzaQty';
+              
+                  // Create input elements to pass data to the form
+                  const emailInputElement = document.createElement('input'); // for order API to send user email
+                  emailInputElement.type='hidden';
+                  emailInputElement.name='user-email';
+                  emailInputElement.value=app.config.sessionToken.email;
+      
+                  // Read only elements
+                  const nameInputElement = document.createElement('input');
+                  nameInputElement.type='text';
+                  nameInputElement.readOnly=true;
+                  nameInputElement.name='pizzaName'+'-'+listItem.name;
+                  nameInputElement.className='pizza-name';
+                  nameInputElement.value = listItem.name;
+      
+                  const priceInputElement = document.createElement('input');
+                  priceInputElement.type='text';
+                  priceInputElement.readOnly=true;
+                  priceInputElement.value = listItem.price;
+                  priceInputElement.name='pizzaPrice'+'-'+listItem.name;
+                  priceInputElement.className='pizza-price';
+      
+                  // QTY - Changeable by the user, loading the saved shopping cart if exists
+                  const qtyInputElement = document.createElement('input');
+                  qtyInputElement.type='number';
+                  qtyInputElement.readOnly=false;
+                  qtyInputElement.name='pizzaQty'+'-'+listItem.name;
+                  qtyInputElement.className='pizza-qty';
+                  qtyInputElement.placeholder = '0';
+                  qtyInputElement.min=0;
+                  qtyInputElement.step=1;
+                  qtyInputElement.max=5;
+                  rowElement.setAttribute('data-index',index);
+                  let prevValue='0';
+
+                  // Create table rows
+                  rowElement.appendChild(emailInputElement);
+                  rowElement.appendChild(nameElement);
+                  nameElement.appendChild(nameInputElement)
+                  rowElement.appendChild(priceElement);
+                  priceElement.appendChild(priceInputElement);
+                  rowElement.appendChild(qtyElement);
+                  qtyElement.appendChild(qtyInputElement);
+                  tBodyElement.appendChild(rowElement); 
+                  
+                  // Create total
+                  if (count==0) {
+                    count=1; // Create element just once
+                    const totalContainerElement=document.createElement('div')
+                    totalContainerElement.className='totalContainer'
+                    const totalQtyElement=document.createElement('div');
+                    totalQtyElement.className='pizzaQty';
+                    totalQtyElement.id='totalQty';
+                    totalQtyElement.innerText=totalQty;
+                    const totalPriceElement=document.createElement('div');
+                    totalPriceElement.innerText=totalPrice;
+                    totalPriceElement.className='pizzaPrice';
+                    totalPriceElement.id='totalPrice';
+                    const totalTitleElement=document.createElement('div');
+                    totalTitleElement.innerText='Total:';
+                    totalTitleElement.className='pizzaName';
+                    totalContainerElement.appendChild(totalTitleElement);  
+                    totalContainerElement.appendChild(totalPriceElement);
+                    totalContainerElement.appendChild(totalQtyElement);
+                    tableContainerElement.appendChild(totalContainerElement);
+                  }
+        
+                  qtyInputElement.addEventListener('keydown',(event)=>{
+                    prevValue=event.target.value ? event.target.value:'0';
+                  })
+
+                  // Calculating total qty and total price;
+                  qtyInputElement.addEventListener('input',(event)=>{
+                    currValue=event.target.value ? event.target.value:'0';
+                    totalQty=totalQty-parseInt(prevValue)+parseInt(currValue);
+                    const index=rowElement.getAttribute('data-index')
+                    totalPrice=totalPrice-parseInt(prevValue)*pizzaList[index].price+parseInt(currValue)*pizzaList[index].price;
+                    const totalQtyElement=document.getElementById('totalQty');
+                    totalQtyElement.innerText=totalQty;
+                    const totalPriceElement=document.getElementById('totalPrice');
+                    totalPriceElement.innerText=totalPrice;
+                  })
+                  if (shoppingCartData.items) {
+                    shoppingCartData.items.forEach((savedItem)=>{
+                      if (savedItem.name==listItem.name) {
+                        qtyInputElement.setAttribute('value',savedItem.qty);
+                      } 
+                    })
+                  }
+                }
+              });
+            }
+          } else {
+            // Don't display creditcard form
+            cardContainerEelement.style="display:none";
+            cardContainerEelementTitle.style="display: none";
+            if (statusCode==404) {
+              app.message('Your shopping cart is empty.','error')
+            } else {
+              app.message('Error reading shoppingcart data.','error')
+            }
+
           }
         })
       } else {

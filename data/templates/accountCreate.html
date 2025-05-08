@@ -1,31 +1,27 @@
-<div class="content" >
-    <div class="contentUpper">
+<main>
+  <div class="wrapperVertical" >
+    <div class="contentUpper pageTitle">
       <h1>{accountCreate.title}</h1>
       <p>Wellcome to your Sign Up Page!</p>
     </div>
-  <div class="contentCenter showHide">
+    <div class="contentCenter showHide">
       <div class="modal">
         <form  class="wrapperVertical" id="accountCreate" action="/api/users" method="POST">
-            <div class="formError"></div>
-            <div class="signupContainer">
-                <div class="inputLabel">First Name</div>
-                <input type="text" name="firstName" placeholder="John" />
-                <div class="inputLabel">Last Name</div>
-                <input type="text" name="lastName" placeholder="Smith" />
-                <div class="inputLabel">email</div>
-                <input type="text" name="email" placeholder="john.smith@gmail.com" />
-                <div class="inputLabel">Street</div>
-                <input type="text" name="street" placeholder="35 Northcliffe Terrace 4217 Quesland" />
-                <div class="inputLabel">Choose a Password</div>
-                <input type="password" name="password" placeholder="Make it a good one!" />
-            </div>
-            <!-- <div class="wrapperHorizontal" style="padding:1rem">
-                <div class="inputLabel" style="padding:0rem 1rem 0rem 0rem">Do you agree to the terms and conditions? </div>
-                <input  type="checkbox" name="tosAgreement" value="agree">
-            </div> -->
-            <button type="submit" class="buttonFirst">Get Started</button>
+          <div class="signupContainer">
+            <div class="inputLabel">First Name</div>
+            <input type="text" name="firstName" placeholder="John" />
+            <div class="inputLabel">Last Name</div>
+            <input type="text" name="lastName" placeholder="Smith" />
+            <div class="inputLabel">email</div>
+            <input type="text" name="email" placeholder="john.smith@gmail.com" />
+            <div class="inputLabel">Street</div>
+            <input type="text" name="street" placeholder="35 Northcliffe Terrace 4217 Quesland" />
+            <div class="inputLabel">Choose a Password</div>
+            <input type="password" name="password" placeholder="Make it a good one!" />
+          </div>
+          <button type="submit" class="buttonFirst">Get Started</button>
         </form>
       </div>
+    </div>
   </div>
-</div>
 </main>

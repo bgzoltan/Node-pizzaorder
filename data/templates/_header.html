@@ -5,39 +5,46 @@
     <base href="{global.baseUrl}" />
     <title>{head.title} | {global.appName}</title>
     <meta name="description" content="{head.description}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link type="image/x-icon" rel="icon" href="public/pizza.ico" />
     <link rel="stylesheet" type="text/css" href="public/app.css" />
+ 
+
   </head>
   <body class="{body.class}">
-    <main class="wrapperVertical" style="flex: 1">
-      <section class="wrapperHorizontal" style="width: 100%">
-        <a class="logo" href="/">
+      <header>
+        <a id="logoPicture" href="/">
           <img src="public/logo.png" alt="Logo" width="70" height="70" />
         </a>
-        <navigation style="width: 100%">
+        <i id="hamburgerIcon" class="material-icons">menu</i>
+        <nav>
           <ul id="menu">
             <li class="menuLink">
               <a href="/">Home</a>
             </li>
             <li class="menuLink">
-              <a href="/account/create">Signup</a>
-            </li>
-            <li class="menuLink">
               <a href="/action/menulist">Pizza menu</a>
             </li>
             <li class="menuLink">
-              <a href="/action/menuorder">Create order</a>
+              <a href="/action/shoppingcart">Shopping cart</a>
+            </li>
+            <li class="menuLink">
+              <a href="/action/pizzaorder">Order</a>
+            </li>
+            <li class="menuLink">
+              <a href="/account/edit">Account</a>
             </li>
             <li class="menuLink switchDisabled">
               <a href="/account/login">Login</a>
             </li>
             <li class="menuLink">
-              <a href="/account/edit">Account Settings</a>
-            </li>
-            <li class="menuLink">
               <a id="logoutButton">Logout</a>
             </li>
+            <li class="menuLink">
+              <a href="/account/create">Signup</a>
+            </li>
           </ul>
-        </navigation>
-      </section>
+        </nav>
+      </header>
+
    

@@ -293,17 +293,51 @@ handlers.menulist = (data, callback) => {
   }
 };
 
-handlers.menuorder = (data, callback) => {
+handlers.shopping_cart = (data, callback) => {
   // Page specific variables
   const templateVariables = {
-    "head.title": "Pizza Order",
-    "head.description": "You can order your pizza",
-    "body.class": "menuOrder",
-    "menuOrder.title": "Orderig your pizza",
+    "head.title": "Your shopping cart",
+    "head.description": "You can select your pizza here",
+    "body.class": "shoppingCart",
+    "shopping_cart.title": "Shopping cart",
   };
 
   if (data.method == "get") {
-    getTemplate("menuOrder", templateVariables, (err, templateData) => {
+    getTemplate("shoppingCart", templateVariables, (err, templateData) => {
+      if (!err && templateData) {
+        // Add the universal header and footer
+        addUniversalTemplates(
+          templateData,
+          templateVariables,
+          function (err, str) {
+            if (!err && str) {
+              // Return that page as HTML
+              callback(200, str, "html");
+            } else {
+              callback(500, undefined, "html");
+            }
+          }
+        );
+      } else {
+        callback(500, undefined, "html");
+      }
+    });
+  } else {
+    callback(405, { Error: "method is not allowed." });
+  }
+};
+
+handlers.pizza_order = (data, callback) => {
+  // Page specific variables
+  const templateVariables = {
+    "head.title": "Your order",
+    "head.description": "You can order ypur pizza here",
+    "body.class": "order",
+    "order.title": "Your order",
+  };
+
+  if (data.method == "get") {
+    getTemplate("order", templateVariables, (err, templateData) => {
       if (!err && templateData) {
         // Add the universal header and footer
         addUniversalTemplates(
@@ -1103,8 +1137,8 @@ handlers.order = (data, callback) => {
 //   "amount":900,
 //   "currency":"AUD",
 //   "card":{"number": "4242424242424242",
-//     "exp_month": 12,
-//     "exp_year": 2025,
+//     "exp_month": "12",
+//     "exp_year": "2025",
 //     "cvc": "123"}
 // }
 handlers._order.post = (data, callback) => {
