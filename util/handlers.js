@@ -41,7 +41,8 @@ handlers.index = (data, callback) => {
     "head.title": "Pizza Order Application",
     "head.description": "Order your favourite pizzaa 0-24h on the Gold Coast",
     "body.class": "index",
-    "index.title": "Pizza House Gold Coast",
+    "header.title": "Pizza House Gold Coast",
+    "header.text": "You can order your favourite pizza 0-24H across the Gold Coast area",
   };
   if (data.method == "get") {
     getTemplate("index", templateVariables, (err, templateData) => {
@@ -74,7 +75,8 @@ handlers.accountCreate = (data, callback) => {
     "head.title": "Create Account",
     "head.description": "Signup is very easy",
     "body.class": "accountCreate",
-    "accountCreate.title": "Sign Up - Create Your Account",
+    "header.title": "Create your account",
+    "header.text": "You can sign up and create your account to order",
   };
 
   if (data.method == "get") {
@@ -108,7 +110,8 @@ handlers.accountEdit = (data, callback) => {
     "head.title": "Edit Account",
     "head.description": "User can edit profile data",
     "body.class": "accountEdit",
-    "accountEdit.title": "Edit Your Account Profile",
+    "header.title": "Edit or Delete your account",
+    "header.text": "You can modify and update or delete your account here",
   };
 
   if (data.method == "get") {
@@ -142,7 +145,8 @@ handlers.accountDelete = (data, callback) => {
     "head.title": "Delete Account",
     "head.description": "User can delete account",
     "body.class": "accountDelete",
-    "accountDelete.title": "Delete Your Account",
+    "header.title": "Deleted account",
+    "header.text": "You have deleted your account",
   };
 
   if (data.method == "get") {
@@ -198,7 +202,8 @@ handlers.login = (data, callback) => {
     "head.title": "Login",
     "head.description": "Login is very easy",
     "body.class": "login",
-    "login.title": "Log In to Your Account",
+    "header.title": "Log In to your account",
+    "header.text": "You can log in here if you already signed up",
   };
 
   if (data.method == "get") {
@@ -232,6 +237,8 @@ handlers.logout = (data, callback) => {
     "logout.title": "Log Out Page",
     "logout.description": "Logout page",
     "body.class": "logout",
+    "header.title": "Log Out from your account",
+    "header.text": "You have logged out",
   };
 
   if (data.method == "get") {
@@ -265,7 +272,8 @@ handlers.menulist = (data, callback) => {
     "head.title": "Pizza Menu",
     "head.description": "List of our pizzas",
     "body.class": "menuList",
-    "menuList.title": "Our Pizza Menu",
+    "header.title": "Our pizza menu",
+    "header.text": "You can see here our menu if you have logged in",
   };
 
   if (data.method == "get") {
@@ -299,7 +307,8 @@ handlers.shopping_cart = (data, callback) => {
     "head.title": "Your shopping cart",
     "head.description": "You can select your pizza here",
     "body.class": "shoppingCart",
-    "shopping_cart.title": "Shopping cart",
+    "header.title": "Shopping cart",
+    "header.text": "You can see here the content of your shopping cart",
   };
 
   if (data.method == "get") {
@@ -333,7 +342,8 @@ handlers.pizza_order = (data, callback) => {
     "head.title": "Your order",
     "head.description": "You can order ypur pizza here",
     "body.class": "order",
-    "order.title": "Your order",
+   "header.title": "Order your pizza",
+    "header.text": "You can order your favourite pizza here if you are logged in",
   };
 
   if (data.method == "get") {
@@ -530,8 +540,6 @@ handlers._users.delete = (data, callback) => {
       ? payload.email
       : false;
 
- 
-
   if (email) {
     const tokenId =
       typeof data.headers.token === "string" && data.headers.token.length == 20
@@ -540,6 +548,7 @@ handlers._users.delete = (data, callback) => {
     if (tokenId) {
       isValidNotExpiredToken(tokenId, email, function (err) {
         if (!err) {
+          // TODO delete shoppingcart and orders, too
           dataUtil.delete("users", email, (err, data) => {
             if (!err) {
               callback(200, data);
@@ -1164,7 +1173,7 @@ handlers._order.post = (data, callback) => {
           const amount =
             typeof payment.amount == "number" &&
             payment.amount > 0 &&
-            payment.amount <= 1000
+            payment.amount <= 10000
               ? payment.amount
               : false;
           const currency =

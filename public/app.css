@@ -47,7 +47,6 @@ nav {
   background-color: #c83737;
   width: 100%;
   padding: 1rem;
-  cursor: pointer;
   color: beige;
 }
 
@@ -83,8 +82,8 @@ nav {
 #menu {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  padding: 5px;
+  gap: 1rem;
+  padding: 0.5rem;
   color: beige;
 }
 
@@ -97,6 +96,7 @@ nav {
 
 .menuLink a.active {
   font-weight: bold;
+  cursor: pointer;
 }
 
 @media screen and (max-width: 600px) {
@@ -110,6 +110,7 @@ nav {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.2rem;
   }
 }
 
@@ -129,11 +130,35 @@ nav {
   text-align: center;
 }
 
-.pageTitle {
+#logoSpace {
+  width: 5rem;
+}
+
+#headerText {
+  margin: 0px;
+  padding: 0px;
+  font-size: smaller;
+}
+@media screen and (max-width: 600px) {
+  h1 {
+    font-size: large;
+  }
+  #headerText {
+    margin: 0px;
+    padding: 0px;
+    font-size: smaller;
+  }
+  #pageTitle {
+    padding-left: 0.5rem;
+    color: beige;
+    flex-grow: 1;
+    border-bottom: 1px solid beige;
+  }
+}
+
+#pageTitle {
   color: beige;
-  padding: 1rem;
-  margin-top: 1rem;
-  background-color:rgba(216, 112, 112, 0.8);
+  flex-grow: 1;
 }
 
 .contentCenter {
@@ -206,6 +231,7 @@ button a {
   border-collapse: collapse;
   display: table;
   table-layout: fixed;
+  background-color: rgba(200, 55, 55, 1);;
 }
 
 .scrollable-table input:read-only{
@@ -217,6 +243,14 @@ button a {
   border-collapse: collapse;
   display: block;
   max-height: 20rem;   /* Scroll height */
+  overflow-y: scroll;
+  font-weight: lighter;
+}
+
+.scrollable-table .tBodyTotalOrder {
+  border-collapse: collapse;
+  display: block;
+  max-height: 10rem;   /* Scroll height */
   overflow-y: scroll;
   font-weight: lighter;
 }
@@ -248,6 +282,11 @@ button a {
   width:10rem;
 }
 
+.totalOrderName {
+  margin: 1rem;
+  flex-grow: 1;
+}
+
 
 .pizzaIngredients {
   width: 34rem;
@@ -260,7 +299,6 @@ button a {
 .totalIngredients {
   margin: 1rem;
   flex-grow: 1;
-  /* width: 100%; */
 }
 
 .pizzaPrice {
@@ -276,6 +314,12 @@ button a {
 .totalPrice {
   margin: 1rem;
   width: 4rem;
+  text-align: right;
+}
+
+.totalOrderPrice {
+  margin: 1rem;
+  width: 3rem;
   text-align: right;
 }
 
@@ -297,25 +341,33 @@ button a {
   text-align: right;
 }
 
+.totalOrderQty {
+  margin: 1rem;
+  width: 3rem;
+  text-align: right;
+}
+
 .totalContainer {
   display: flex;
   flex-direction: row;
-
   justify-content:flex-end; 
   background-color:rgba(200, 55, 55, 1);
   color:white;
   font-weight: bold;
   font-family: "Sour Gummy", sans-serif;
   padding-right: 2rem;
-  /* padding-top: 1rem;
-  padding-bottom: 1rem; */
 }
 
-
-
-
-
-/*    */
+.totalOrderContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content:flex-end; 
+  background-color:rgba(200, 55, 55, 1);
+  color:white;
+  font-weight: bold;
+  font-family: "Sour Gummy", sans-serif;
+  padding-right: 1rem;
+}
 
 .wrapperVertical {
   display: flex;
@@ -440,6 +492,9 @@ input {
 
 #creditCardContainerTitle {
   display:none;
+  color: beige;
+  background-color:  rgba(200, 55, 55, 1);
+  width: 22rem;
 }
 
 #creditCardContainer {
@@ -450,7 +505,7 @@ input {
   background-color:  rgba(200, 55, 55, 0.8);;
   color: beige;
   padding: 1rem;
-  margin-top:1rem;
+  width: 22rem;
 }
 
 #creditCardContainer .parentElement{

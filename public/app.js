@@ -22,7 +22,7 @@ app.client.request = (
   payload,
   callback
 ) => {
-  //TODO: check whether the server has not logged the user out because some function only will be available for logged in users
+
   headers = typeof headers == "object" && headers !== null ? headers : {};
   path = typeof path == "string" ? path : "/";
   payload = typeof payload == "object" && payload !== null ? payload : {};
@@ -143,6 +143,7 @@ app.bindForms = function () {
     
           const tableBodyElement = document.querySelector('.scrollable-table tbody');
           const rowElements = tableBodyElement.querySelectorAll('tr');
+       
 
           const pizzaOrders = [];
 
@@ -174,6 +175,7 @@ app.bindForms = function () {
 
           const tableBodyElement = document.querySelector('.scrollable-table tbody');
           const rowElements = tableBodyElement.querySelectorAll('tr');
+      
 
           const pizzaOrders = [];
 
@@ -203,7 +205,7 @@ app.bindForms = function () {
 
           const currency='AUD';
 
-          const amount=parseInt(document.querySelector('#totalPrice').innerText);
+          const amount=parseInt(document.querySelector('#totalPrice').innerText)*100; // convert to cents that Stripe expects
           // Formatted payload
           payload={...payload,email,amount,currency,card}
        
@@ -263,7 +265,7 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
         } else {
           // If successful, set the token in the local storage and redirect the user
           app.setSessionToken(newResponsePayload);
-          app.message("You have signed up successfully.",'info');
+          app.message("You have signed up successfully.",'info','/action/menulist');
         }
       }
     );
@@ -272,12 +274,12 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
   // If login was successful, set the token in local storage and redirect the user
   if (formId == "login") {
     app.setSessionToken(responsePayload);
-    app.message("You have logged in successfully.",'info');
+    app.message("You have logged in successfully.",'info','/action/menulist');
   }
 
  // Messages to the user on successfull FORM activities
    if (formId=='accountEdit') 
-      app.message('Account updated successfully.','info')
+      app.message('Account updated successfully.','info','/')
 
 
   if(formId == 'accountDelete'){
@@ -291,6 +293,10 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
     if (requestPayload._method=='PUT') app.message('The shopping cart is updated.','info',redirect)
     if (requestPayload._method=='DELETE') app.message('The shopping cart is deleted.','info',redirect)
   }
+
+  if (formId=='order') {
+    app.message('Your orders is succesfully accepted. Thank you.','info','/')
+  };
 };
 
 // Create an info message for the user
@@ -637,7 +643,7 @@ app.loadMenuListPageContent = function(){
         // Create header rows
         const hRowElement=document.createElement('tr');
         const hNameElement=document.createElement('th');
-        hNameElement.innerText='Name'
+        hNameElement.innerText='Pizza name'
         hNameElement.className='pizzaName';
 
         const hIngredientsElement=document.createElement('th');
@@ -645,7 +651,7 @@ app.loadMenuListPageContent = function(){
         hIngredientsElement.className='pizzaIngredients';
 
         const hPriceElement=document.createElement('th');
-        hPriceElement.innerText='Price'
+        hPriceElement.innerText='Price in AUD'
         hPriceElement.className='pizzaPrice';
 
         // Creating table structure
@@ -758,13 +764,13 @@ app.loadShoppingCartPageContent = function(){
               // Create header rows
               const hRowElement=document.createElement('tr');
               const hNameElement=document.createElement('th');
-              hNameElement.innerText='Name'
+              hNameElement.innerText='Pizza name'
               hNameElement.className='pizzaName';
               const hIngredientsElement=document.createElement('th');
               hIngredientsElement.innerText='Ingredients'
               hIngredientsElement.className='pizzaIngredients';
               const hPriceElement=document.createElement('th');
-              hPriceElement.innerText='Price'
+              hPriceElement.innerText='Price in AUD'
               hPriceElement.className='pizzaPrice';
               // Extending the table with quantity column
               const hQtyElement=document.createElement('th');
@@ -818,7 +824,7 @@ app.loadShoppingCartPageContent = function(){
                 priceInputElement.name='pizzaPrice'+'-'+listItem.name;
                 priceInputElement.className='pizza-price';
     
-                // QTY - Changeable by the user, loading the saved shopping cart if exists
+                // QTY - Creating shoppin cart qty input - loading with values later
                 const qtyInputElement = document.createElement('input');
                 qtyInputElement.type='number';
                 qtyInputElement.readOnly=false;
@@ -829,10 +835,7 @@ app.loadShoppingCartPageContent = function(){
                 qtyInputElement.step=1;
                 qtyInputElement.max=5;
                 rowElement.setAttribute('data-index',index);
-                let prevValue='0';
 
-               
-                
                 // Create table rows
                 rowElement.appendChild(emailInputElement);
                 rowElement.appendChild(nameElement);
@@ -877,26 +880,36 @@ app.loadShoppingCartPageContent = function(){
                   tableContainerElement.appendChild(totalContainerElement);
                  }
             
-       
-              qtyInputElement.addEventListener('keydown',(event)=>{
-                prevValue=event.target.value ? event.target.value:'0';
-              })
-
               // Calculating total qty and total price;
-              qtyInputElement.addEventListener('input',(event)=>{
+              const changeTotalValues=(prevValue,event)=>{
                 currValue=event.target.value ? event.target.value:'0';
                 totalQty=totalQty-parseInt(prevValue)+parseInt(currValue);
-                const index=rowElement.getAttribute('data-index')
-                totalPrice=totalPrice-parseInt(prevValue)*pizzaList[index].price+parseInt(currValue)*pizzaList[index].price;
+                const currentItem=pizzaList.find((item)=> item.name==nameInputElement.value )
+                totalPrice=totalPrice-parseInt(prevValue)*currentItem.price+parseInt(currValue)*currentItem.price;
                 const totalQtyElement=document.getElementById('totalQty');
                 totalQtyElement.innerText=totalQty;
                 const totalPriceElement=document.getElementById('totalPrice');
                 totalPriceElement.innerText=totalPrice;
+              }   
+              qtyInputElement.addEventListener('keyup',(event)=>{
+                const prevValue=qtyInputElement.getAttribute('prevValue') ? qtyInputElement.getAttribute('prevValue'):0;
+                qtyInputElement.setAttribute('prevValue',event.target.value);
+                  changeTotalValues(prevValue,event);
+                })
+             
+              qtyInputElement.addEventListener('change',(event)=>{
+                const prevValue=qtyInputElement.getAttribute('prevValue') ? qtyInputElement.getAttribute('prevValue'):0;
+                qtyInputElement.setAttribute('prevValue',event.target.value);
+                changeTotalValues(prevValue,event);
               })
+
               if (shoppingCartData.items) {
+                // Loading the qty values from the shopping cart list 
                 shoppingCartData.items.forEach((savedItem)=>{
                   if (savedItem.name==listItem.name) {
                     qtyInputElement.setAttribute('value',savedItem.qty);
+                    // Saving the previous value for total calculation
+                    qtyInputElement.setAttribute('prevValue',savedItem.qty);
                   } 
                 })
               }
@@ -976,14 +989,15 @@ app.loadOrderPageContent = function(){
               const tableElement=document.createElement('table');
               const tHeadElement=document.createElement('thead');
               const tBodyElement=document.createElement('tbody');
+              tBodyElement.className='tBodyTotalOrder';
               
               // Create header rows
               const hRowElement=document.createElement('tr');
               const hNameElement=document.createElement('th');
-              hNameElement.innerText='Name'
+              hNameElement.innerText='Pizza name'
               hNameElement.className='pizzaName';
               const hPriceElement=document.createElement('th');
-              hPriceElement.innerText='Price'
+              hPriceElement.innerText='Price in AUD'
               hPriceElement.className='pizzaPrice';
               // Extending the table with quantity column
               const hQtyElement=document.createElement('th');
@@ -1003,8 +1017,6 @@ app.loadOrderPageContent = function(){
 
               // Listing shopping cart items
               shoppingCartData.items.forEach((listItem,index) => {
-                if (listItem.qty!==0) {
-
                   // Create a table row
                   const rowElement = document.createElement('tr');
                   const nameElement = document.createElement('td');
@@ -1035,19 +1047,12 @@ app.loadOrderPageContent = function(){
                   priceInputElement.name='pizzaPrice'+'-'+listItem.name;
                   priceInputElement.className='pizza-price';
       
-                  // QTY - Changeable by the user, loading the saved shopping cart if exists
                   const qtyInputElement = document.createElement('input');
                   qtyInputElement.type='number';
-                  qtyInputElement.readOnly=false;
+                  qtyInputElement.readOnly=true;
                   qtyInputElement.name='pizzaQty'+'-'+listItem.name;
                   qtyInputElement.className='pizza-qty';
-                  qtyInputElement.placeholder = '0';
-                  qtyInputElement.min=0;
-                  qtyInputElement.step=1;
-                  qtyInputElement.max=5;
-                  rowElement.setAttribute('data-index',index);
-                  let prevValue='0';
-
+                 
                   // Create table rows
                   rowElement.appendChild(emailInputElement);
                   rowElement.appendChild(nameElement);
@@ -1057,44 +1062,29 @@ app.loadOrderPageContent = function(){
                   rowElement.appendChild(qtyElement);
                   qtyElement.appendChild(qtyInputElement);
                   tBodyElement.appendChild(rowElement); 
-                  
-                  // Create total
+              
+                  // Create total 
                   if (count==0) {
                     count=1; // Create element just once
                     const totalContainerElement=document.createElement('div')
-                    totalContainerElement.className='totalContainer'
+                    totalContainerElement.className='totalOrderContainer'
                     const totalQtyElement=document.createElement('div');
-                    totalQtyElement.className='pizzaQty';
+                    totalQtyElement.className='totalOrderQty';
                     totalQtyElement.id='totalQty';
                     totalQtyElement.innerText=totalQty;
                     const totalPriceElement=document.createElement('div');
                     totalPriceElement.innerText=totalPrice;
-                    totalPriceElement.className='pizzaPrice';
+                    totalPriceElement.className='totalOrderPrice';
                     totalPriceElement.id='totalPrice';
                     const totalTitleElement=document.createElement('div');
                     totalTitleElement.innerText='Total:';
-                    totalTitleElement.className='pizzaName';
+                    totalTitleElement.className='totalOrderName';
                     totalContainerElement.appendChild(totalTitleElement);  
                     totalContainerElement.appendChild(totalPriceElement);
                     totalContainerElement.appendChild(totalQtyElement);
                     tableContainerElement.appendChild(totalContainerElement);
                   }
         
-                  qtyInputElement.addEventListener('keydown',(event)=>{
-                    prevValue=event.target.value ? event.target.value:'0';
-                  })
-
-                  // Calculating total qty and total price;
-                  qtyInputElement.addEventListener('input',(event)=>{
-                    currValue=event.target.value ? event.target.value:'0';
-                    totalQty=totalQty-parseInt(prevValue)+parseInt(currValue);
-                    const index=rowElement.getAttribute('data-index')
-                    totalPrice=totalPrice-parseInt(prevValue)*pizzaList[index].price+parseInt(currValue)*pizzaList[index].price;
-                    const totalQtyElement=document.getElementById('totalQty');
-                    totalQtyElement.innerText=totalQty;
-                    const totalPriceElement=document.getElementById('totalPrice');
-                    totalPriceElement.innerText=totalPrice;
-                  })
                   if (shoppingCartData.items) {
                     shoppingCartData.items.forEach((savedItem)=>{
                       if (savedItem.name==listItem.name) {
@@ -1102,7 +1092,6 @@ app.loadOrderPageContent = function(){
                       } 
                     })
                   }
-                }
               });
             }
           } else {
