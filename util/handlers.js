@@ -619,7 +619,7 @@ handlers._tokens.post = (data, callback) => {
                 const tokenObject = {
                   id: tokenId,
                   email,
-                  expires: Date.now() + 1000 * 60 * 10,  // Token expires in 10 minutes
+                  expires: Date.now() + 1000 * 60 * 2,  // Token expires in 10 minutes
                  };
 
                 // Create the token if passdword is ok
@@ -1219,9 +1219,11 @@ handlers._order.post = (data, callback) => {
                         };
 
                         // Email meassage html form
+                        // Cent is coverted back to dollar
+                        const modifiedPaymentDetails={...paymentDetails,amount:amount/100};
                         const htmlMessage = formatMessage(
                           shoppingCartData,
-                          paymentDetails,
+                          modifiedPaymentDetails,
                           modifiedCard
                         );
 

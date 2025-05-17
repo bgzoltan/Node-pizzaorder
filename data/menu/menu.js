@@ -36,5 +36,17 @@ export const pizzaMenuList = {
         "🍕🍅🍗🌶️🧅⚪🧀 Tomato base, house cooked chicken, roasted capsicum, caramelised onions, mozarella, parmesan.",
       price: 23,
     },
+    {
+      name: "Pork",
+      ingredients:
+        "🍕🍅🍗🌶️🧅⚪🧀 Tomato base, house cooked pork, roasted capsicum, caramelised onions, mozarella, parmesan.",
+      price: 23,
+    },
+    {
+      name: "Beef",
+      ingredients:
+        "🍕🍅🍗🌶️🧅⚪🧀 Tomato base, house cooked beef, roasted capsicum, caramelised onions, mozarella, parmesan.",
+      price: 23,
+    },
   ],
 };

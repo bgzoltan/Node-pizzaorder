@@ -1,60 +1,88 @@
+/* Global Styles */
+:root {
+  --primary-red: #c83737;
+  --primary-red-transparent: rgba(200, 55, 55, 0.8);
+  --secondary-orange: orange;
+  --error:  #94b173;
+  --beige: beige;
+  --background: #ffd2ad;
+  --font-family-primary: "Sour Gummy", sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-}
-
 body {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  min-height: 100vh;
-  width: 100vw;
-  background-color: #FFD2AD;
-  color: black;
-  font-family: "Sour Gummy", sans-serif;
-  background-image: url('pizzabackground.png');
-  background-repeat: no-repeat;
-  background-position: center;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  font-family: var(--font-family-primary);
+  background-color: var(--background);
 }
 
-main {
+input {
+  border-width: 1px;
+  border-radius: 2px;
+  padding: 2px;
+  font-family: var(--font-family-primary);
+  font-size: medium;
+}
+
+.inputLabel {
+  padding: 0 0 5px 0;
+  color: var(--beige);
+}
+
+.form {
+  max-height: 100%;
+}
+
+.layoutContainer {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  flex:1;
+  position: relative;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: var(--background);
+  color: black;
+  background-image: url("pizzabackground.png");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
+/* *Header and navigation */
+
 header {
-  position: relative;
   width: 100%;
+  max-height: 12%;
+}
+
+@media screen and (max-width: 600px) {
+  header {
+    max-height: 50%;
+  } /* *Because of the mobile menu size  */
 }
 
 nav {
   display: flex;
   justify-content: flex-end;
-  background-color: #c83737;
+  background-color: var(--primary-red);
   width: 100%;
   padding: 1rem;
-  color: beige;
+  color: var(--beige);
 }
 
 #logoPicture {
   display: block;
   position: absolute;
-  left:0;
-  top:0;
+  left: 0;
+  top: 0;
   z-index: 10;
 }
 
@@ -71,9 +99,10 @@ nav {
   #hamburgerIcon {
     cursor: pointer;
     display: block;
-    color:beige;
-    background-color: #c83737;
+    color: var(--beige);
+    background-color: var(--primary-red);
   }
+
   #logoPicture {
     display: none;
   }
@@ -84,13 +113,13 @@ nav {
   justify-content: center;
   gap: 1rem;
   padding: 0.5rem;
-  color: beige;
+  color: var(--beige);
 }
 
 .menuLink a {
   cursor: pointer;
-  color: beige;
-  font-weight:lighter;
+  color: var(--beige);
+  font-weight: lighter;
   text-decoration: none;
 }
 
@@ -114,24 +143,15 @@ nav {
   }
 }
 
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex: 1;
-}
-
-.contentUpper {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  padding-bottom: 1rem;
-  text-align: center;
-}
-
 #logoSpace {
+  display: block;
   width: 5rem;
+}
+
+#pageTitle {
+  display: block;
+  color: var(--beige);
+  flex-grow: 1;
 }
 
 #headerText {
@@ -139,34 +159,33 @@ nav {
   padding: 0px;
   font-size: smaller;
 }
+
 @media screen and (max-width: 600px) {
   h1 {
     font-size: large;
   }
+
   #headerText {
     margin: 0px;
     padding: 0px;
     font-size: smaller;
   }
+
   #pageTitle {
     padding-left: 0.5rem;
-    color: beige;
+    color: var(--beige);
     flex-grow: 1;
-    border-bottom: 1px solid beige;
+    border-bottom: 1px solid var(--beige);;
   }
 }
 
-#pageTitle {
-  color: beige;
-  flex-grow: 1;
-}
-
-.contentCenter {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
+@media screen and (min-width: 600px) and (max-width: 900px) {
+  #pageTitle {
+    display: none;
+  }
+  #logoSpace {
+    display: none;
+  }
 }
 
 .loginContainer {
@@ -177,25 +196,15 @@ nav {
 
 @media screen and (max-width: 600px) {
   .loginContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
-
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  /* max-height: 100% */
-}
-
-
-
 h2 {
-  font-size:x-large;
-  padding: 1rem;
+  font-size: large;
+  padding: 0.5rem;
 }
 
 ul {
@@ -211,161 +220,173 @@ button a {
   text-decoration: none;
 }
 
+/* * TABLE STYLE */
 
- /* TABLE STYLE */
+main {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  flex: 1;
+  max-height: 80%;
+  width: 100%;
+}
+
+@media screen and (max-width: 600px) {
+  main {
+    flex: none;
+    max-height: 90%;
+  }
+}
+
+
+.tableWrapper {
+  margin-top: 1rem;
+  width: 98%;
+  overflow-y: auto;
+  display: block;
+}
+
+.tableWrapperShoppingCart {
+  max-height: 100%;
+}
+
+.tableWrapperMenuList {
+  height: 80%;
+}
+
+.tableWrapper::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+@media screen and (max-width: 600px) {
+  .tableWrapperShoppingCart {
+    max-height: 80%;
+  }
+
+  .tableWrapperMenuList {
+    height: 90%;
+  }
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background-color: var(--beige);
+  border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background-color: transparent;
+}
 
 .scrollable-table {
-  margin: 1rem;
-  table-layout: fixed;
-  background-color: rgba(200, 55, 55, 0.8);;
-}
-
-.scrollable-table td,
-.scrollable-table th {
-  color: beige;
-  border-bottom: 1px solid black;
-  padding: 1rem;
-}
-
-.scrollable-table thead {
+  font-size: large;
   border-collapse: collapse;
   display: table;
+  width: 100%;
   table-layout: fixed;
-  background-color: rgba(200, 55, 55, 1);;
+  overflow-y: auto;
+  background-color: var(--primary-red-transparent);
 }
 
-.scrollable-table input:read-only{
-  color:beige;
-  background-color:transparent;
+.scrollable-table tbody td,
+.scrollable-table thead th {
+  color: var(--beige);
+  border-bottom: 1px solid black;
+  padding: 0.5rem;
+  table-layout: fixed;
+}
+
+.scrollable-table thead th {
+  position: sticky;
+  top: 0px;
+  background-color: var(--primary-red);
 }
 
 .scrollable-table tbody {
   border-collapse: collapse;
-  display: block;
-  max-height: 20rem;   /* Scroll height */
-  overflow-y: scroll;
   font-weight: lighter;
 }
 
-.scrollable-table .tBodyTotalOrder {
-  border-collapse: collapse;
-  display: block;
-  max-height: 10rem;   /* Scroll height */
-  overflow-y: scroll;
-  font-weight: lighter;
-}
-
-.scrollable-table tbody::-webkit-scrollbar {
-  width: 1rem;
-}
-
-.scrollable-table tbody::-webkit-scrollbar-thumb {
-  background-color: beige;
-  border-radius: 4px;
-}
-
-.scrollable-table input {
+.scrollable-table tbody input {
+  box-sizing: border-box;
+  margin: 0px;
   padding: 0px;
+  width: 100%;
   border: 0px;
 }
 
-.pizzaName {
-  width: 10rem;
+.scrollable-table input:read-only {
+  color: var(--beige);
+  background-color: transparent;
 }
 
-.pizzaName input {
-  max-width:7rem;
+@media screen and (max-width: 600px) {
+  .scrollable-table tbody,
+  thead,
+  tfoot,
+  tbody input {
+    font-size: small;
+  }
+
+  .scrollable-table tbody td,
+  .scrollable-table thead th {
+    padding: 0.2rem;
+  }
 }
 
-.totalName {
-  margin: 1rem;
-  width:10rem;
+.scrollable-table tfoot tr {
+  position: sticky;
+  bottom: 0px;
 }
 
-.totalOrderName {
-  margin: 1rem;
-  flex-grow: 1;
-}
-
-
-.pizzaIngredients {
-  width: 34rem;
-}
-
-.pizzaIngredients input {
-  max-width: 30rem;
-}
-
-.totalIngredients {
-  margin: 1rem;
-  flex-grow: 1;
-}
-
-.pizzaPrice {
-  width: 5rem;
+.scrollable-table tfoot tr #totalQty,
+#totalPrice {
   text-align: right;
 }
 
-.pizzaPrice input {
-  width: 2rem;
+.scrollable-table tfoot tr td {
+  padding: 0.5rem;
+}
+
+@media screen and (max-width: 600px) {
+  .scrollable-table tfoot tr td {
+    padding: 0.2rem;
+  }
+}
+
+/* * Width of shopping cart columns */
+
+.cartName {
+  width: 15%;
+}
+
+.cartIngredients {
+  width: 65%;
+}
+
+.cartPrice, .cartQty {
+  width: 10%;
+}
+
+.pizza-price,
+.pizza-qty,
+#totalPrice,
+#totalQty {
   text-align: right;
 }
 
-.totalPrice {
-  margin: 1rem;
-  width: 4rem;
-  text-align: right;
-}
-
-.totalOrderPrice {
-  margin: 1rem;
-  width: 3rem;
-  text-align: right;
-}
-
-.pizzaQty {
-  width: 5rem;
-  text-align: right;
-}
-
-.pizzaQty input {
-  width: 2rem;
-  text-align: right;
-}
-
-.totalQty {
-  margin-top: 1rem;
-  margin-left: 1rem;
-  margin-bottom: 1rem;
-  width: 2rem;
-  text-align: right;
-}
-
-.totalOrderQty {
-  margin: 1rem;
-  width: 3rem;
-  text-align: right;
+.textWrap {
+  text-align: center;
+  overflow-wrap: break-word;
+  /* Break  the long words */
+  word-break: break-word;
+  white-space: normal;
 }
 
 .totalContainer {
-  display: flex;
-  flex-direction: row;
-  justify-content:flex-end; 
-  background-color:rgba(200, 55, 55, 1);
-  color:white;
+  background-color: var(--primary-red);
+  color: var(--beige);
   font-weight: bold;
-  font-family: "Sour Gummy", sans-serif;
-  padding-right: 2rem;
-}
-
-.totalOrderContainer {
-  display: flex;
-  flex-direction: row;
-  justify-content:flex-end; 
-  background-color:rgba(200, 55, 55, 1);
-  color:white;
-  font-weight: bold;
-  font-family: "Sour Gummy", sans-serif;
   padding-right: 1rem;
 }
 
@@ -383,84 +404,129 @@ button a {
   align-items: center;
 }
 
-
 .modal {
+  color: var(--beige);
+  background-color: var(--primary-red-transparent);
+  padding: 0.5rem;
+  margin: 0.5rem;
+}
+
+.modal form {
+  gap: 1rem;
+}
+
+/* * Orders */
+.orderPageWrapper {
+  margin-top: 1rem;
+  width: 90%;
+  overflow-y: auto;
+  display: block;
+}
+
+#orderWrapper {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  color: beige;
-  background-color:rgba(200, 55, 55, 0.8);
-  padding: 1rem;
-  margin: 1rem;
 }
 
-.buttonFirst {
-  font-weight: normal;
-  font-family: "Sour Gummy", sans-serif;
-  font-size: large;
-  border-radius: 5px;
-  margin: 1rem;
-  padding: 10px 25px 10px 25px;
-  border: 0px solid, black;
-  box-shadow: 0 4px 6px black;
-  background-color: orange;
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.buttonSecond {
-  font-weight: lighter;
-  font-family: "Sour Gummy", sans-serif;
-  font-size: large;
-  border-radius: 5px;
-  margin: 1rem;
-  padding: 10px 25px 10px 25px;
-  border: 0px solid, black;
-  box-shadow: 0 4px 6px black;
-  background-color: tomato;
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-  opacity: 0.8;  
-  cursor: not-allowed;  
-  pointer-events: none;   
-}
+/* * Buttons */
 
 .buttonsContainer {
   display: flex;
+  flex-direction: row;
+  gap: 1rem;
   justify-content: center;
 }
 
+.buttonPrimary {
+  font-weight: normal;
+  font-family: inherit;
+  font-size: large;
+  border-radius: 5px;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border: 0px solid, black;
+  box-shadow: 0 4px 6px black;
+  background-color: var(--secondary-orange);
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+  margin: 0.2rem;
+}
+
+.buttonSecondary {
+  font-weight: lighter;
+  font-family: inherit;
+  font-size: large;
+  border-radius: 5px;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border: 0px solid, black;
+  box-shadow: 0 4px 6px black;
+  background-color: var(--primary-red);
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 0.8;
+  cursor: not-allowed;
+  pointer-events: none;
+  text-align: center;
+  margin: 0.2rem;
+}
+
+.warning {
+  font-size: small;
+}
+
+
+@media screen and (max-width: 600px) {
+  .buttonPrimary,
+  .buttonSecondary {
+    font-size: small;
+    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+  }
+}
+
+/* *Footer */
+
 footer {
+  display: flex;
+  justify-content: center;
   width: 100vw;
-  color: beige;
-  font-weight:lighter;
-  background-color:#c83737;
+  color: var(--beige);
+  font-weight: lighter;
+  background-color: var(--primary-red);
+  font-size: small;
+  max-height: 20%;
+  position: absolute;
+  bottom: 0;
+  margin-top: 1rem;
 }
 
 #footer {
-  margin: 1rem;
+  text-align: center;
+  overflow-wrap: break-word; /* Break  the URL */
+  word-break: break-word;
+  white-space: normal;
+  padding: 1rem;
 }
 
-.signupContainer {
+.accountContainer {
   display: grid;
   grid-template-columns: 10rem 15rem;
   gap: 1rem;
-  /* padding: 10px; */
 }
 
-input {
-  border-width: 1px;
-  border-radius: 2px;
-  padding: 2px;
-  font-family: "Sour Gummy", sans-serif;
-  font-size:medium;
-}
+@media screen and (max-width: 600px) {
+  .accountContainer {
+    grid-template-columns: 5rem 10rem;
+    gap: 0.2rem;
+  }
 
-.inputLabel {
-  padding: 0 0 5px 0;
-  color: beige;
+  .accountContainer {
+    grid-template-columns: 6rem 10rem;
+    gap: 0.2rem;
+  }
 }
 
 .showHide {
@@ -468,58 +534,78 @@ input {
   visibility: hidden;
 }
 
-.errorModal {
+.errorModal, .messageModal {
   display: flex;
   position: absolute;
+  top: 30%;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: red;
-  color: white;
-  padding: 3rem;
+  color: var(--beige);
+  padding: 2rem;
+  border: 1px solid black;
+  box-shadow: 0 4px 6px black;
+}
+
+.errorModal {
+  background-color: var(--error);
 }
 
 .messageModal {
-  display:flex;
-  position: absolute;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: #94B173;
-  color: black;
-  padding: 3rem;
+  background-color: var(--primary-red);
 }
 
+/* *Creditcard form */
+
 #creditCardContainerTitle {
-  display:none;
-  color: beige;
-  background-color:  rgba(200, 55, 55, 1);
-  width: 22rem;
+  display: none;
+  color: var(--beige);
+  text-align: center;
 }
 
 #creditCardContainer {
   display: none;
   grid-template-columns: 10rem 15rem;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-direction: column;
-  background-color:  rgba(200, 55, 55, 0.8);;
-  color: beige;
+  color: var(--beige);
   padding: 1rem;
-  width: 22rem;
 }
 
-#creditCardContainer .parentElement{
-  display:none;
+#creditCardContainer .parentElement {
+  display: none;
 }
 
 #creditCardContainer #cardNumber {
-  width:9rem;
+  width: 9rem;
 }
 
 #creditCardContainer #expMonth {
-  width:2rem;
+  width: 2rem;
 }
 
-#creditCardContainer #expYear, #cvc {
-  width:3rem;
+#creditCardContainer #expYear,
+#cvc {
+  width: 3rem;
+}
+
+@media screen and (max-width: 600px) {
+  #creditCardContainerTitle {
+    font-size: large;
+    display: none;
+    color: var(--beige);
+    text-align: center;
+  }
+
+  #creditCardContainer {
+    font-size: small;
+    grid-template-columns: 6rem 12rem;
+    gap: 0.2rem;
+    padding: 0.2rem;
+    margin-top: 1rem;
+  }
+
+  #creditCardContainer input {
+    font-size: small;
+  }
 }

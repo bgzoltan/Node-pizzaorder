@@ -1,23 +1,19 @@
 <main>
-  <div class="wrapperVertical" >
-    <div class="contentCenter showHide">
-      <div class="modal">
-        <form  class="wrapperVertical" id="accountCreate" action="/api/users" method="POST">
-          <div class="signupContainer">
-            <div class="inputLabel">First Name</div>
-            <input type="text" name="firstName" placeholder="John" />
-            <div class="inputLabel">Last Name</div>
-            <input type="text" name="lastName" placeholder="Smith" />
-            <div class="inputLabel">email</div>
-            <input type="text" name="email" placeholder="john.smith@gmail.com" />
-            <div class="inputLabel">Street</div>
-            <input type="text" name="street" placeholder="35 Northcliffe Terrace 4217 Quesland" />
-            <div class="inputLabel">Choose a Password</div>
-            <input type="password" name="password" placeholder="Make it a good one!" />
-          </div>
-          <button type="submit" class="buttonFirst">Get Started</button>
-        </form>
+  <div class="wrapperVertical showHide modal">
+    <form class="wrapperVertical" id="accountCreate" action="/api/users" method="POST">
+      <div class="loginContainer">
+        <div class="inputLabel">First Name</div>
+        <input type="text" name="firstName" placeholder="John" />
+        <div class="inputLabel">Last Name</div>
+        <input type="text" name="lastName" placeholder="Smith" />
+        <div class="inputLabel">email</div>
+        <input type="text" name="email" placeholder="john.smith@gmail.com" />
+        <div class="inputLabel">Address</div>
+        <input type="text" name="street" placeholder="35 Northcliffe Terrace 4217 Quesland" />
+        <div class="inputLabel">Choose a Password</div>
+        <input type="password" name="password" placeholder="Make it a good one!" />
       </div>
-    </div>
+      <button type="submit" class="buttonPrimary">Get Started</button>
+    </form>
   </div>
 </main>

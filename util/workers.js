@@ -35,7 +35,7 @@ pizzaWorkers.checkTokenExpiration = () => {
                               if (!err) {
                                 const currentDate = new Date();
                                 console.log(
-                                  `${fileName} user is automatically logged out: ${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`
+                                  `${fileName} token expired, user is automatically logged out: ${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`
                                 );
                               } else {
                                 console.log(err, loggedInDeleteData);

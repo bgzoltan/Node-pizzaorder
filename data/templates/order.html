@@ -1,21 +1,24 @@
-<main>  
-  <div class="wrapperVertical" >
-    <div class="contentCenter hideWhenLogout wrapperVertical">
-      <form  class="wrapperVertical" id="order" action="/api/order" method="POST">
-        <div  id="orderSummary" class="scrollable-table">
+<main>
+  <div class="hideWhenLogout orderPageWrapper">
+    <form id="order" action="/api/order" method="POST">
+      <div id="orderWrapper">
+        <div id="orderSummary" class="scrollable-table">
         </div>
-        <h2 id="creditCardContainerTitle">Credit Card Information</h1>
-        <div id="creditCardContainer">
-            <label class="inputLabel">Card number</label>
-            <input readOnly id="cardNumber" type="text" name="cardNumber" maxlength="19" inputmode="numeric" pattern="\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}" value="4242 4242 4242 4242" required />
-            <label class="inputLabel">Exp. month</label>
-            <input readOnly id="expMonth" type="text" name="expMonth" value="12" />
-            <label class="inputLabel">Exp. year</label>
-            <input readOnly id="expYear" type="text" name="expYear" value="2025" />
-            <label class="inputLabel">CVC</label>
-            <input readOnly id="cvc" type="text" name="cvc" value="123" />
+        <div class="wrapperVertical modal">
+          <h2 id="creditCardContainerTitle">Credit Card Information</h1>
+            <div id="creditCardContainer">
+              <label class="inputLabel">Card number</label>
+              <input readOnly id="cardNumber" type="text" name="cardNumber" maxlength="19" inputmode="numeric"
+                pattern="\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}" value="4242 4242 4242 4242" required />
+              <label class="inputLabel">Exp. month</label>
+              <input readOnly id="expMonth" type="text" name="expMonth" value="12" />
+              <label class="inputLabel">Exp. year</label>
+              <input readOnly id="expYear" type="text" name="expYear" value="2025" />
+              <label class="inputLabel">CVC</label>
+              <input readOnly id="cvc" type="text" name="cvc" value="123" />
+            </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 </main>

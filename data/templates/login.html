@@ -1,17 +1,13 @@
 <main>
-  <div class="wrapperVertical" >
-    <div class="contentCenter showHide">
-      <div class="modal">
-        <form  class="wrapperVertical" id="login" action="/api/tokens" method="POST">
-          <div class="loginContainer">
-            <div class="inputLabel">email</div>
-            <input type="text" name="email" placeholder="john.smith@gmail.com" />
-            <div class="inputLabel">Your Password</div>
-            <input type="password" name="password" placeholder="Type in your password!" />
-          </div>
-            <button type="submit" class="buttonFirst">Get Started</button>
-        </form>
+  <div class="wrapperVertical modal shoHide">
+    <form class="wrapperVertical" id="login" action="/api/tokens" method="POST">
+      <div class="loginContainer">
+        <div class="inputLabel">email</div>
+        <input type="text" name="email" placeholder="john.smith@gmail.com" />
+        <div class="inputLabel">Your Password</div>
+        <input type="password" name="password" placeholder="Type in your password!" />
       </div>
-    </div>
+      <button type="submit" class="buttonPrimary">Get Started</button>
+    </form>
   </div>
 </main>
