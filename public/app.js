@@ -290,21 +290,28 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
     );
   }
 
-// * MESSAGES to the user, REDIRECTS and actions according to the FORM 
+  // * MESSAGES to the user, REDIRECTS and actions according to the FORM
   if (formId == "login") {
+    // * Login process
     app.setSessionToken(responsePayload);
     startInactivityTimer();
     startCheckIfUserLoggedOutByServerTimer();
-    localStorage.setItem('timersStarted', 'true');
+    localStorage.setItem("timersStarted", "true");
     app.message("You have logged in successfully.", "info", "/action/menulist");
   }
-  
+
   if (formId == "accountEdit")
     app.message("Account updated successfully.", "info", "/");
 
   if (formId == "accountDelete") {
-    app.logoutProcess();
-    window.location = "/account/delete";
+    app.message(
+      "Your account will be deleted.",
+      "info",
+      "/account/delete",
+      () => {
+        app.logoutProcess();
+      }
+    );
   }
 
   if (formId == "shoppingCart") {
@@ -318,12 +325,18 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
   }
 
   if (formId == "order") {
-    app.message("Your orders is succesfully accepted. Thank you.", "info", "/");
+    app.message("Your orders is succesfully accepted. We sent you a confirmation emai about Thank you.", "info", "/");
   }
 };
 
-// * INFOR or ERROR MESSAGE for the user
-app.message = (messageText, type, redirect = "", callback = () => {}) => {
+// * INFO or ERROR MESSAGE for the user
+app.message = (
+  messageText,
+  type,
+  redirect = "",
+  messageCallback = () => 
+  {}
+) => {
   const messageModalElement = document.querySelector("#messageModal");
   const hasButton = document.querySelector("#messageModal button");
 
@@ -342,9 +355,7 @@ app.message = (messageText, type, redirect = "", callback = () => {}) => {
     messageModalElement.setAttribute("class", "messageModal");
   }
 
-  if (callback) {
-    callback();
-  }
+  messageCallback();
 
   buttonElement.addEventListener("click", (event) => {
     messageModalElement.removeAttribute("class");
@@ -393,6 +404,7 @@ app.bindHamburgerIcon = () => {
 
 // * LOGOUT the user
 app.logoutProcess = () => {
+  console.log("Logout process is started.");
   const tokenId =
     typeof app.config.sessionToken.id == "string"
       ? app.config.sessionToken.id
@@ -420,19 +432,14 @@ app.logoutProcess = () => {
               : "Error during API request.";
           app.message(error, "error");
         } else {
-          app.message(
-            "You have logged out successfully...",
-            "info",
-            "account/logout",
-            () => {
-              app.deleteSessionToken();
-              app.setLoggedInClass(false);
-              stopInactivityTimer();
-              stopCheckIfUserLoggedOutByServerTimer();
-              localStorage.removeItem('timersStarted');
-              clearInterval(renewInterval);
-            }
-          );
+          // * Logout and clear unnecessary data and functions
+          app.deleteSessionToken();
+          app.setLoggedInClass(false);
+          stopInactivityTimer();
+          stopCheckIfUserLoggedOutByServerTimer();
+          clearInterval(renewInterval);
+          localStorage.removeItem("timersStarted");
+          localStorage.removeItem("token");
         }
       }
     );
@@ -544,7 +551,6 @@ const renewInterval = setInterval(function () {
   });
 }, 1000 * 60 * 5);
 
-
 // * Start the inactivity timer
 const startInactivityTimer = () => {
   if (!app.inactiveTime) {
@@ -552,30 +558,28 @@ const startInactivityTimer = () => {
     app.inactiveTime = setInterval(() => {
       const now = Date.now();
       const minutesInactive = (now - app.lastInteractionTime) / 1000 / 60;
-      if (minutesInactive >= 1) {
+      if (minutesInactive >= 10) {
         app.message(
-          "User inactive for over 10 minutes.",
+          "You are inactive over 10 minutes. Logout is started.",
           "info",
           "/account/login",
-          () => {
-            console.log("User inactive logout triggered. Clearing intervals.");
-            stopInactivityTimer();
+          (param) => {
             app.logoutProcess();
           }
         );
       }
     }, 1000 * 30);
-  };
+  }
 };
 
 const stopInactivityTimer = () => {
   if (app.inactiveTime) {
     clearInterval(app.inactiveTime);
-    app.inactiveTime = null; 
-  };
+    app.inactiveTime = null;
+  }
 };
 
-// * Start to check if the user is logged out by the server 
+// * Start to check if the user is logged out by the server
 const startCheckIfUserLoggedOutByServerTimer = () => {
   if (!app.checkIfUserLoggedOutByServer) {
     // * If timer is not running yet then start it
@@ -597,15 +601,14 @@ const startCheckIfUserLoggedOutByServerTimer = () => {
             queryStringObject,
             undefined,
             function (statusCode, responsePayload) {
-              console.log("Check...", statusCode, responsePayload);
               if (statusCode == 404) {
                 localStorage.removeItem("token");
                 app.message(
-                  "You have logged out by the server.",
+                  "You have logged out by the server, because your token is expired.",
                   "info",
                   "/account/login",
                   () => {
-                    stopCheckIfUserLoggedOutByServerTimer();
+                    app.logoutProcess();
                   }
                 );
               } else {
@@ -621,14 +624,14 @@ const startCheckIfUserLoggedOutByServerTimer = () => {
         }
       }
     }, 1000 * 1);
-  };
+  }
 };
 
 const stopCheckIfUserLoggedOutByServerTimer = () => {
   if (app.inactiveTime) {
     clearInterval(app.checkIfUserLoggedOutByServer);
-    app.checkIfUserLoggedOutByServer = null; 
-  };
+    app.checkIfUserLoggedOutByServer = null;
+  }
 };
 
 app.init = function () {
@@ -699,7 +702,6 @@ app.loadDataOnPage = function () {
     app.loadAccountDeletePageContent();
   }
 };
-
 
 // * Loading MENU LIST page content
 app.loadMenuListPageContent = function () {
@@ -773,11 +775,13 @@ app.loadMenuListPageContent = function () {
               const nameElement = document.createElement("td");
               const ingredientsElement = document.createElement("td");
               const priceElement = document.createElement("td");
+              nameElement.className = "pizza-name textWrap";
               nameElement.textContent = item.name;
               ingredientsElement.textContent = item.ingredients;
               ingredientsElement.className = "text-wrap";
               priceElement.textContent = item.price;
               priceElement.className = "pizza-price";
+
               rowElement.appendChild(nameElement);
               rowElement.appendChild(ingredientsElement);
               rowElement.appendChild(priceElement);
@@ -788,14 +792,14 @@ app.loadMenuListPageContent = function () {
           app.message(
             "Error: " +
               statusCode +
-              " - Something went wrong when communicating with the server.",
+              " - Something went wrong. Maybe you are logged out by the server.",
             "error"
           );
         }
       }
     );
   } else {
-    app.message("Your email creditantial is missing.", "error");
+    app.message("You are probably logged out by the server.", "error");
   }
 };
 
@@ -989,8 +993,16 @@ app.loadShoppingCartPageContent = function () {
                     nameInputElement.type = "text";
                     nameInputElement.readOnly = true;
                     nameInputElement.name = "pizzaName" + "-" + listItem.name;
-                    nameInputElement.className = "pizza-name";
+                    nameInputElement.className = "pizza-name textWrap";
                     nameInputElement.value = listItem.name;
+                    nameInputElement.type = "hidden"; // * Hidden because of the issue below
+
+                    // * I have created this cell because I could not fix the issue to wrap long text in the input element. This cell just displays the pizza name
+                    const nameCellElement = document.createElement("div");
+                    nameCellElement.type = "text";
+                    nameCellElement.name = "pizzaName" + "-" + listItem.name;
+                    nameCellElement.className = "pizza-name textWrap";
+                    nameCellElement.innerText = listItem.name;
 
                     const priceInputElement = document.createElement("input");
                     priceInputElement.type = "text";
@@ -1017,6 +1029,7 @@ app.loadShoppingCartPageContent = function () {
                     rowElement.appendChild(emailInputElement);
                     rowElement.appendChild(nameElement);
                     nameElement.appendChild(nameInputElement);
+                    nameElement.appendChild(nameCellElement);
                     rowElement.appendChild(ingredientsElement);
                     rowElement.appendChild(priceElement);
                     priceElement.appendChild(priceInputElement);
@@ -1135,7 +1148,7 @@ app.loadShoppingCartPageContent = function () {
       }
     );
   } else {
-    app.message("Your email creditantial is missing.", "error");
+    app.message("Your are probably logged out by the server.", "error");
   }
 };
 
@@ -1368,7 +1381,7 @@ app.loadOrderPageContent = function () {
       }
     );
   } else {
-    app.message("Your email creditantial is missing.", "error");
+    app.message("You are probably logged out by the server.", "error");
   }
 };
 
@@ -1436,7 +1449,7 @@ app.loadAccountEditPageContent = function () {
       }
     );
   } else {
-    app.message("Your email creditantial is missing.", "error");
+    app.message("You are probably logged out by the server.", "error");
   }
 };
 
@@ -1464,15 +1477,15 @@ app.loadAccountDeletePageContent = function () {
     const formElement = document.querySelector("#accountDelete");
     formElement.appendChild(hiddenInputElement);
   } else {
-    app.message("Your email creditantial is missing.", "error");
+    app.message("You are probably logged out by the server.", "error");
   }
 };
 
 // * Call the init processes after the window loads
 window.onload = function () {
-  const isTimersStarted = localStorage.getItem('timersStarted') === 'true';
+  const isTimersStarted = localStorage.getItem("timersStarted") === "true";
   if (isTimersStarted && app.config.sessionToken) {
-    // *Timers were active in a previous session, starting now (onload). 
+    // *Timers were active in a previous session, starting now (onload).
     startInactivityTimer();
     startCheckIfUserLoggedOutByServerTimer();
   }
