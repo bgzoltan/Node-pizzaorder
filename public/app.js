@@ -1,7 +1,8 @@
 // * Frontend app. container
 window.app = window.app || {};
-app.inactiveTime = null;
-app.checkIfUserLoggedOutByServer = null;
+app.inactivityTimer = null;
+app.checkLoggedOutByServerTimer = null;
+app.renewTokenTimer = null;
 
 app.getToken = () => {
   const token = localStorage.getItem("token");
@@ -295,8 +296,15 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
     // * Login process
     app.setSessionToken(responsePayload);
     startInactivityTimer();
-    startCheckIfUserLoggedOutByServerTimer();
+    startCheckLoggedOutByServerTimer();
+    startRenewTokenTimer();
     localStorage.setItem("timersStarted", "true");
+    const currentDate = new Date();
+    console.log(
+      `User logged in ${currentDate.getDate()}.${
+        currentDate.getMonth() + 1
+      }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
+    );
     app.message("You have logged in successfully.", "info", "/action/menulist");
   }
 
@@ -317,15 +325,27 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
   if (formId == "shoppingCart") {
     const redirect = "/action/shoppingcart";
     if (requestPayload._method == "POST")
-      app.message("The shopping cart is created.", "info", redirect);
+      app.message(
+        "Your shopping cart is created. You can send your order now.",
+        "info",
+        redirect
+      );
     if (requestPayload._method == "PUT")
-      app.message("The shopping cart is updated.", "info", redirect);
+      app.message(
+        "Your shopping cart is updated. You can send your order now.",
+        "info",
+        redirect
+      );
     if (requestPayload._method == "DELETE")
-      app.message("The shopping cart is deleted.", "info", redirect);
+      app.message("Your shopping cart is deleted.", "info", redirect);
   }
 
   if (formId == "order") {
-    app.message("Your orders is succesfully accepted. We sent you a confirmation emai about Thank you.", "info", "/");
+    app.message(
+      "Your orders is succesfully accepted. We sent you a confirmation emai about Thank you.",
+      "info",
+      "/"
+    );
   }
 };
 
@@ -334,8 +354,7 @@ app.message = (
   messageText,
   type,
   redirect = "",
-  messageCallback = () => 
-  {}
+  messageCallback = () => {}
 ) => {
   const messageModalElement = document.querySelector("#messageModal");
   const hasButton = document.querySelector("#messageModal button");
@@ -355,8 +374,6 @@ app.message = (
     messageModalElement.setAttribute("class", "messageModal");
   }
 
-  messageCallback();
-
   buttonElement.addEventListener("click", (event) => {
     messageModalElement.removeAttribute("class");
     message.innerText = "";
@@ -366,6 +383,7 @@ app.message = (
       window.location.href = redirect;
     }
   });
+  messageCallback();
 };
 
 // * LOGOUT BUTTON controll
@@ -402,49 +420,69 @@ app.bindHamburgerIcon = () => {
   });
 };
 
-// * LOGOUT the user
-app.logoutProcess = () => {
-  console.log("Logout process is started.");
-  const tokenId =
-    typeof app.config.sessionToken.id == "string"
-      ? app.config.sessionToken.id
-      : false;
-  const userEmail =
-    typeof app.config.sessionToken.email == "string"
-      ? app.config.sessionToken.email
-      : false;
-  const headers = { token: tokenId };
-  const payload = { email: userEmail };
+app.logoutSteps = () => {
+  // * Logout and clear unnecessary data and functions
+  app.deleteSessionToken();
+  app.setLoggedInClass(false);
+  stopTimers();
+  localStorage.removeItem("timersStarted");
+};
 
-  if (tokenId) {
-    app.client.request(
-      undefined,
-      "api/tokens",
-      "DELETE",
-      undefined,
-      payload,
-      function (statusCode, responsePayload) {
-        if (statusCode !== 200 && statusCode !== 201) {
-          // Try to get the error from the api, or set a default error message
-          var error =
-            typeof responsePayload.Error == "string"
-              ? responsePayload.Error
-              : "Error during API request.";
-          app.message(error, "error");
-        } else {
-          // * Logout and clear unnecessary data and functions
-          app.deleteSessionToken();
-          app.setLoggedInClass(false);
-          stopInactivityTimer();
-          stopCheckIfUserLoggedOutByServerTimer();
-          clearInterval(renewInterval);
-          localStorage.removeItem("timersStarted");
-          localStorage.removeItem("token");
-        }
+// * LOGOUT the user
+app.logoutProcess = (logoutByServer = false) => {
+  const currentDate = new Date();
+  console.log(
+    `Logout process started in: ${currentDate.getDate()}.${
+      currentDate.getMonth() + 1
+    }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
+  );
+
+  if (logoutByServer) {
+    app.message(
+      "You have logged out by the server, because your token is expired.",
+      "info",
+      "/account/login",
+      () => {
+        app.logoutSteps();
       }
     );
   } else {
-    app.message("Could not logout.", "error");
+    const tokenId =
+      typeof app.config.sessionToken.id == "string"
+        ? app.config.sessionToken.id
+        : false;
+    const userEmail =
+      typeof app.config.sessionToken.email == "string"
+        ? app.config.sessionToken.email
+        : false;
+    const headers = { token: tokenId };
+    const payload = { email: userEmail };
+
+    if (tokenId) {
+      app.client.request(
+        undefined,
+        "api/tokens",
+        "DELETE",
+        undefined,
+        payload,
+        function (statusCode, responsePayload) {
+          if (statusCode !== 200 && statusCode !== 201) {
+            // Try to get the error from the api, or set a default error message
+            var error =
+              typeof responsePayload.Error == "string"
+                ? responsePayload.Error
+                : "Error during API request.";
+            app.message(error, "error");
+          } else {
+            app.message("You logged out.", "info", "/account/login", () => {
+              app.logoutSteps();
+            });
+          }
+        }
+      );
+    } else {
+      app.message("Error occured. Could not logout.", "error");
+    }
   }
 };
 
@@ -543,19 +581,37 @@ app.renewToken = function (callback) {
 };
 
 // * Renew token timer
-const renewInterval = setInterval(function () {
-  app.renewToken(function (err) {
-    if (err) {
-      console.log("Error occured during token renew.");
-    }
-  });
-}, 1000 * 60 * 5);
+const startRenewTokenTimer = () => {
+  // * Renew token before expiration
+  const renewTokenBeforeExpirationMinute=1;
+  if (!app.renewTokenTimer) {
+    app.renewTokenTimer = setInterval(function () {
+      if (app.config.sessionToken) {
+        const currentTime = Date.now();
+        if (currentTime > app.config.sessionToken.expires - renewTokenBeforeExpirationMinute*10000) {
+          app.renewToken(function (err) {
+            if (err) {
+              console.log("Error occured during token renew.");
+            } else {
+              const currentDate = new Date();
+              console.log(
+                `Token is renewed ${currentDate.getDate()}.${
+                  currentDate.getMonth() + 1
+                }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
+              );
+            }
+          });
+        }
+      }
+    }, 1000 * 10);
+  }
+};
 
 // * Start the inactivity timer
 const startInactivityTimer = () => {
-  if (!app.inactiveTime) {
+  if (!app.inactivityTimer) {
     // * If timer is not running yet then start it
-    app.inactiveTime = setInterval(() => {
+    app.inactivityTimer = setInterval(() => {
       const now = Date.now();
       const minutesInactive = (now - app.lastInteractionTime) / 1000 / 60;
       if (minutesInactive >= 10) {
@@ -572,18 +628,11 @@ const startInactivityTimer = () => {
   }
 };
 
-const stopInactivityTimer = () => {
-  if (app.inactiveTime) {
-    clearInterval(app.inactiveTime);
-    app.inactiveTime = null;
-  }
-};
-
 // * Start to check if the user is logged out by the server
-const startCheckIfUserLoggedOutByServerTimer = () => {
-  if (!app.checkIfUserLoggedOutByServer) {
+const startCheckLoggedOutByServerTimer = () => {
+  if (!app.checkLoggedOutByServerTimer) {
     // * If timer is not running yet then start it
-    app.checkIfUserLoggedOutByServer = setInterval(() => {
+    app.checkLoggedOutByServerTimer = setInterval(() => {
       if (app.config.sessionToken) {
         const email =
           typeof app.config.sessionToken.email == "string"
@@ -602,15 +651,7 @@ const startCheckIfUserLoggedOutByServerTimer = () => {
             undefined,
             function (statusCode, responsePayload) {
               if (statusCode == 404) {
-                localStorage.removeItem("token");
-                app.message(
-                  "You have logged out by the server, because your token is expired.",
-                  "info",
-                  "/account/login",
-                  () => {
-                    app.logoutProcess();
-                  }
-                );
+                app.logoutProcess(true);
               } else {
                 if (statusCode != 200) {
                   console.log(
@@ -627,10 +668,14 @@ const startCheckIfUserLoggedOutByServerTimer = () => {
   }
 };
 
-const stopCheckIfUserLoggedOutByServerTimer = () => {
-  if (app.inactiveTime) {
-    clearInterval(app.checkIfUserLoggedOutByServer);
-    app.checkIfUserLoggedOutByServer = null;
+const stopTimers = () => {
+  if (app.inactivityTimer) {
+    clearInterval(app.checkLoggedOutByServerTimer);
+    app.checkLoggedOutByServerTimer = null;
+    clearInterval(app.inactivityTimer);
+    app.inactivityTimer = null;
+    clearInterval(app.renewTokenTimer);
+    app.renewTokenTimer = null;
   }
 };
 
@@ -799,7 +844,7 @@ app.loadMenuListPageContent = function () {
       }
     );
   } else {
-    app.message("You are probably logged out by the server.", "error");
+    app.message("You are not logged in.", "error");
   }
 };
 
@@ -1148,7 +1193,7 @@ app.loadShoppingCartPageContent = function () {
       }
     );
   } else {
-    app.message("Your are probably logged out by the server.", "error");
+    app.message("Your are not logged in.", "error");
   }
 };
 
@@ -1381,7 +1426,7 @@ app.loadOrderPageContent = function () {
       }
     );
   } else {
-    app.message("You are probably logged out by the server.", "error");
+    app.message("You are not logged in.", "error");
   }
 };
 
@@ -1449,7 +1494,7 @@ app.loadAccountEditPageContent = function () {
       }
     );
   } else {
-    app.message("You are probably logged out by the server.", "error");
+    app.message("You are not logged in.", "error");
   }
 };
 
@@ -1477,7 +1522,7 @@ app.loadAccountDeletePageContent = function () {
     const formElement = document.querySelector("#accountDelete");
     formElement.appendChild(hiddenInputElement);
   } else {
-    app.message("You are probably logged out by the server.", "error");
+    app.message("You are not logged in.", "error");
   }
 };
 
@@ -1487,7 +1532,8 @@ window.onload = function () {
   if (isTimersStarted && app.config.sessionToken) {
     // *Timers were active in a previous session, starting now (onload).
     startInactivityTimer();
-    startCheckIfUserLoggedOutByServerTimer();
+    startCheckLoggedOutByServerTimer();
+    startRenewTokenTimer();
   }
   app.init();
   app.getSessionToken();

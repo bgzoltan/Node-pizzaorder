@@ -30,10 +30,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET, {
 
 export const handlers = {};
 
-// USERS HANDLERS *****************
-handlers._users = {};
-
-// FRONTEND HANDLERS FOR HTML **************
+// * FRONTEND HANDLERS FOR HTML **************
 
 handlers.index = (data, callback) => {
   // Index page specific variables
@@ -371,9 +368,12 @@ handlers.pizza_order = (data, callback) => {
   }
 };
 
-// HANBDLERS FOR JSON
+// * HANBDLERS FOR JSON
 
-// CREATE USER
+// * USERS HANDLERS *****************
+handlers._users = {};
+
+// * CREATE USER
 // sample user payload in json:
 // {
 //   "firstName": "Zoltan",
@@ -382,7 +382,7 @@ handlers.pizza_order = (data, callback) => {
 //   "street": "2 Aquastreet QLD 4215",
 //   "password": "abcdefgh1#"
 // }
-// to identify the user I simply used the email address
+// * to identify the user I simply used the email address
 handlers._users.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
@@ -406,13 +406,13 @@ handlers._users.post = (data, callback) => {
         }
       );
     } else {
-      callback(400, { Error: "missing or invalid data." });
+      callback(400, { Error: "Missing or invalid data. The password must be min. 8 char long and contain 1 special character and 1 number." });
     }
   }
 };
 
-// READ USER DATA
-// email query and token are necessary
+// * READ USER DATA
+// * email query and token are necessary
 handlers._users.get = (data, callback) => {
   const { query } = data;
   const email =
@@ -449,8 +449,8 @@ handlers._users.get = (data, callback) => {
   }
 };
 
-// MODIFY USER DATA
-// token and payload in json are necessary
+// * MODIFY USER DATA
+// * token and payload in json are necessary
 handlers._users.put = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
@@ -470,14 +470,14 @@ handlers._users.put = (data, callback) => {
         isValidNotExpiredToken(tokenId, user.email, function (err) {
           if (!err) {
 
-            // Reading the original password
+            // * Reading the original password
             dataUtil.read('users',user.email,(err,userData)=>{
               if (!err && userData) {
                 let hashedPassword=userData.password;
                 if (user.password.trim().length==0) {
-                  // User did not change the password because the default value is an empty string on the form
+                  // * User did not change the password because the default value is an empty string on the form
                 } else {
-                  // User changed the password
+                  // * User changed the password
                   const password =
                   typeof user.password == "string" &&
                   user.password.trim().length >= 8 &&
@@ -491,7 +491,7 @@ handlers._users.put = (data, callback) => {
                   }
                 };
 
-                //   The user cannot update his email address
+                // * The user cannot update his email address
                 dataUtil.update(
                   "users",
                   user.email,
@@ -503,7 +503,7 @@ handlers._users.put = (data, callback) => {
                   },
                   (err, data) => {
                     if (!err && data) {
-                      // Don't send back the password
+                      // * Don't send back the password
                       const { password, ...userWOPassword } = data;
                       callback(200, userWOPassword);
                     } else {
@@ -530,8 +530,8 @@ handlers._users.put = (data, callback) => {
   }
 };
 
-// DELETE USER DATA
-// email query and token are necessary
+// * DELETE USER DATA
+// * email query and token are necessary
 handlers._users.delete = (data, callback) => {
   const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
 
@@ -579,16 +579,18 @@ handlers.users = (data, callback) => {
   }
 };
 
-// TOKENS HANDLERS *****************
+// * TOKENS HANDLERS *****************
 handlers._tokens = {};
 
-// LOGIN
+// * LOGIN
 // sample login payload in json:
 // {
 //   "email":"zoltan@gmail.com",
-//   "password":"abcdefgh1#"
+//   "password":"abcdefgh1#" - min. 8 character and contains a special character and a number
 // }
 handlers._tokens.post = (data, callback) => {
+  // * Time in minutes of token expiration
+  const tokenExpireTime=2;
   const payload = typeof data.payload == "string" ? data.payload : false;
   if (!payload) {
     callback(400, { Error: "missing token data." });
@@ -600,8 +602,8 @@ handlers._tokens.post = (data, callback) => {
       dataUtil.read("users", email, (err, userData) => {
         if (!err && userData) {
 
-          // Checking whether the user already logged in
-          // I use loggedin folder to store the users who are logged in
+          // * Checking whether the user already logged in
+          // * I use loggedin folder to store the users who are logged in
           dataUtil.read("loggedin", email, (err, logData) => {
             if (err == 400) {
               callback(err, {
@@ -613,23 +615,24 @@ handlers._tokens.post = (data, callback) => {
             } else {
               const hashedPassword = hash(password);
 
-              // Checking the password
+              // * Checking the password
               if (hashedPassword == userData.password) {
                 const tokenId = createRandomString(20);
+                // * Token object
                 const tokenObject = {
                   id: tokenId,
                   email,
-                  expires: Date.now() + 1000 * 60 * 2,  // Token expires in 10 minutes
+                  expires: Date.now() + 1000 * 60 * tokenExpireTime
                  };
 
-                // Create the token if passdword is ok
+                // * Create the token if passdword is ok
                 dataUtil.create(
                   "tokens",
                   tokenId,
                   tokenObject,
                   (err, tokenData) => {
                     if (!err) {
-                      // if user is not logged in earlier and the pasword is ok then create a loggedin file
+                      // * if user is not logged in earlier and the pasword is ok then create a loggedin file
                       const loggedInTimeStamp = Date.now();
                       const loggedIn = { tokenId, date: loggedInTimeStamp };
                       dataUtil.create(
@@ -686,24 +689,27 @@ handlers._tokens.post = (data, callback) => {
   }
 };
 
+// * Renew token
 handlers._tokens.put = (data, callback) => {
+  // * Time in minutes of then new token expiration
+  const renewedTokenExpireTime=2;
   const payload = typeof data.payload == "string" ? data.payload : false;
   if (!payload) {
     callback(400, { Error: "missing token data." });
   } else {
     const token = JSON.parse(payload);
     const { email, id } = token;
-    // Checking whether the user already logged in
+    // * Checking whether the user already logged in
     dataUtil.read("loggedin", email, (err, logData) => {
       if (err != 404 && logData) {
         const tokenId =
           typeof logData.tokenId == "string" ? logData.tokenId : false;
         if (tokenId) {
-          // Checking if the token is exists.
+          // * Checking if the token is exists.
           dataUtil.read("tokens", tokenId, (err, tokenData) => {
             let tokenObject = {};
             const currentDate = new Date();
-            const expires = Date.now() + 1000 * 60 * 10; // New token expires in 10 minutes
+            const expires = Date.now() + 1000 * 60 * renewedTokenExpireTime
             if (!err && tokenData.email == email) {
               tokenObject = {
                 ...tokenData,
@@ -712,7 +718,7 @@ handlers._tokens.put = (data, callback) => {
             } else {
               callback(403, { Error: "not authorized to renew the token." });
             }
-            // Renewing the token.
+            // * Renewing the token.
             dataUtil.update(
               "tokens",
               tokenId,
@@ -748,15 +754,15 @@ handlers._tokens.put = (data, callback) => {
 };
 
 
-// LOGOUT
+// * LOGOUT
 handlers._tokens.delete = (data, callback) => {
-  // because of security reasons the token will be send in the headers
+  // * Because of security reasons the token will be send in the headers
   const tokenId =
     typeof data.headers.token === "string" && data.headers.token.length == 20
       ? data.headers.token
       : false;
 
-  // to identify the user it's email will be send in the body because of security reasons
+  // * To identify the user it's email will be send in the body because of security reasons
   const payload = typeof data.payload == "string" ? data.payload : false;
   const user = JSON.parse(payload);
   if (tokenId) {
@@ -804,7 +810,7 @@ handlers.tokens = (data, callback) => {
   }
 };
 
-// PIZZAMENU HANDLERS *****************
+// * PIZZAMENU HANDLERS *****************
 
 handlers._menu = {};
 
@@ -816,8 +822,8 @@ handlers.menu = (data, callback) => {
   }
 };
 
-// GET THE FULL PIZZA MENU
-// email query and token are necessary
+// * GET THE FULL PIZZA MENU
+// * email query and token are necessary
 handlers._menu.get = (data, callback) => {
   const { query } = data;
   const email =
@@ -845,7 +851,7 @@ handlers._menu.get = (data, callback) => {
   }
 };
 
-// SHOPPING CART HANDLERS *****************
+// * SHOPPING CART HANDLERS *****************
 
 handlers._shoppingcart = {};
 
@@ -857,7 +863,7 @@ handlers.shoppingcart = (data, callback) => {
   }
 };
 
-// CREATE SHOPPING CART
+// * CREATE SHOPPING CART
 // interface:
 // {
 // email: string,
@@ -886,19 +892,19 @@ handlers._shoppingcart.post = (data, callback) => {
               ? shoppingCart.items
               : false;
           const shoppingCartDate = parseInt(Date.now());
-          // Summarize item prices
+          // * Summarize item prices
           summarizeOrderItems(items, (err, totalData) => {
             if (err) {
               callback(err, totalData);
             } else {
-              // Extending with total price and order date
+              // * Extending with total price and order date
               const modifiedShoppingCart = {
                 ...shoppingCart,
                 totalPrice: totalData,
                 date: shoppingCartDate,
               };
               if (items) {
-                // Check if shopping cart already exists
+                // * Check if shopping cart already exists
                 dataUtil.read(
                   "shopping-carts",
                   shoppingCart.email,
@@ -909,7 +915,7 @@ handlers._shoppingcart.post = (data, callback) => {
                           "shopping card already exists, you can modify or delete it.",
                       });
                     } else {
-                      // Check the orderable items.
+                      // * Check the orderable items.
                       anyNotAvailableItems(
                         shoppingCart,
                         (err, notAvailableItems) => {
@@ -918,7 +924,7 @@ handlers._shoppingcart.post = (data, callback) => {
                               Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
                             });
                           } else {
-                            // Create shopping cart
+                            // * Create shopping cart
                             dataUtil.create(
                               "shopping-carts",
                               shoppingCart.email,
@@ -954,7 +960,7 @@ handlers._shoppingcart.post = (data, callback) => {
   }
 };
 
-// MODIFY SHOPPING CART
+// * MODIFY SHOPPING CART
 handlers._shoppingcart.put = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
@@ -984,13 +990,13 @@ handlers._shoppingcart.put = (data, callback) => {
                 date: shoppingCartModificationDate,
               };
               if (items) {
-                // Check if shopping cart already exists
+                // * Check if shopping cart already exists
                 dataUtil.read(
                   "shopping-carts",
                   shoppingCart.email,
                   (err, shoppingCartData) => {
                     if (!err && shoppingCartData) {
-                      // Check the orderable items.
+                      // * Check the orderable items.
                       anyNotAvailableItems(
                         shoppingCart,
                         (err, notAvailableItems) => {
@@ -999,7 +1005,7 @@ handlers._shoppingcart.put = (data, callback) => {
                               Error: `These items are not on the menu list, please change them: ${notAvailableItems}`,
                             });
                           } else {
-                            // Modify shopping cart
+                            // * Modify shopping cart
                             dataUtil.update(
                               "shopping-carts",
                               shoppingCart.email,
@@ -1054,7 +1060,7 @@ handlers._shoppingcart.get = (data, callback) => {
       isValidNotExpiredToken(tokenId, email, function (err) {
         if (!err) {
           
-          // Checking whether the user already has a shopping cart
+          // * Checking whether the user already has a shopping cart
           dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
             if (!err && shoppingCartData) {
               callback(false,shoppingCartData)
@@ -1087,7 +1093,7 @@ handlers._shoppingcart.get = (data, callback) => {
   }
 };
 
-// DELETE SHOPPING CART
+// * DELETE SHOPPING CART
 handlers._shoppingcart.delete = (data, callback) => {
   const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
 
@@ -1104,7 +1110,7 @@ handlers._shoppingcart.delete = (data, callback) => {
     if (tokenId) {
       isValidNotExpiredToken(tokenId, email, function (err) {
         if (!err) {
-          // Delete shopping cart
+          // * Delete shopping cart
           dataUtil.delete("shopping-carts", email, (err) => {
             if (!err) {
               callback(200, { Success: "Shopping cart now is empty." });
@@ -1139,7 +1145,7 @@ handlers.order = (data, callback) => {
 
 
 
-// ORDER AND PAYMENT BY CARD
+// * ORDER AND PAYMENT BY CARD
 // sample payment payload in json:
 // {
 //   "email": "kovacsg76@gmail.com",
@@ -1166,10 +1172,10 @@ handlers._order.post = (data, callback) => {
           ? payment.email
           : false;
 
-      // Checking whether the user already has a shopping cart
+      // * Checking whether the user already has a shopping cart
       dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
         if (!err && shoppingCartData) {
-          // Validating payment details
+          // * Validating payment details
           const amount =
             typeof payment.amount == "number" &&
             payment.amount > 0 &&
@@ -1190,21 +1196,21 @@ handlers._order.post = (data, callback) => {
                 // Checking card details
                 isValidCard(card, (err) => {
                   if (!err) {
-                    // Executing payment with Stripe integration
-                    // createStripePaymentMethod(card, (err, paymentMethod) => {}) only necessary if I want to create a paymentMethod in live mode
-                    // In test mode "pm_card_visa" is used instead of "card" details
+                    // * Executing payment with Stripe integration
+                    // * createStripePaymentMethod(card, (err, paymentMethod) => {}) only necessary if I want to create a paymentMethod in live mode
+                    // * In test mode "pm_card_visa" is used instead of "card" details
 
                     const paymentObject = {
                       amount,
                       currency,
-                      payment_method: "pm_card_visa", // instead of card in test mode
+                      payment_method: "pm_card_visa", // * instead of card in test mode
                       automatic_payment_methods: { enabled: true },
                       confirm: false,
                     };
                     stripe.paymentIntents
                       .create(paymentObject)
                       .then((paymentIntent) => {
-                        // Hide card details in response
+                        // * Hide card details in response
                         const modifiedCard = {
                           ...card,
                           number: "xxxxxxxxxxxx" + card.number.slice(12, 16),
@@ -1218,8 +1224,8 @@ handlers._order.post = (data, callback) => {
                           ...shoppingCartData,
                         };
 
-                        // Email meassage html form
-                        // Cent is coverted back to dollar
+                        // * Email meassage html form
+                        // * Cent is converted back to dollar
                         const modifiedPaymentDetails={...paymentDetails,amount:amount/100};
                         const htmlMessage = formatMessage(
                           shoppingCartData,
@@ -1227,16 +1233,16 @@ handlers._order.post = (data, callback) => {
                           modifiedCard
                         );
 
-                        // Sending email using Mailgun integration
-                        // On my Mailgun dashboard I have created 2 verified email address to test the message sending
-                        // I can use Maligun free of charge during the next 30 days
+                        // * Sending email using Mailgun integration
+                        // * On my Mailgun dashboard I have created 2 verified email address to test the message sending
+                        // * I can use Maligun free of charge during the next 30 days
                         sendEmailMessage(
                           email,
                           "Thank you for your order.",
                           htmlMessage,
                           (err, data) => {
                             if (!err && data) {
-                              // Moving shopping cart to orders folder to get the get the current orders later
+                              // * Moving shopping cart to orders folder to get the get the current orders later
                               dataUtil.move(
                                 "shopping-carts",
                                 "orders",
@@ -1295,7 +1301,7 @@ handlers._order.post = (data, callback) => {
 
 
 
-// LOGOUTCHECK HANDLERS *****************
+// * LOGOUTCHECK HANDLERS *****************
 
 handlers._logoutcheck = {};
 
@@ -1307,7 +1313,7 @@ handlers.logoutcheck = (data, callback) => {
   }
 };
 
-// Checking if the user logged out.
+// * Checking if the user logged out.
 handlers._logoutcheck.get = (data, callback) => {
   const { query }=data;
   if (!query) {
@@ -1315,7 +1321,7 @@ handlers._logoutcheck.get = (data, callback) => {
   } else {
     const {email} = query;
     if (email) {
-      // Checking if the user already logged out
+      // * Checking if the user already logged out
       dataUtil.read("loggedin", email, (err, loggedInData) => {
         if (!err && loggedInData) {
           callback(false,{})

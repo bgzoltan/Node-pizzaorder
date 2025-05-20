@@ -1,7 +1,7 @@
 /* Global Styles */
 :root {
   --primary-red: #c83737;
-  --primary-red-transparent: rgba(200, 55, 55, 0.8);
+  --primary-red-transparent: rgba(200, 55, 55, 0.9);
   --secondary-orange: orange;
   --error:  #94b173;
   --beige: beige;
@@ -386,10 +386,10 @@ table td input[readonly] {
 
 .pizza-name {
   font-weight: bold;
+  text-align: left;
 }
 
 .textWrap {
-  text-align: center;
   overflow-wrap: break-word;
   /* Break  the long words */
   word-break: break-word;
