@@ -1,11 +1,15 @@
 import { pizzaServer } from "./util/server.js";
 import { pizzaWorkers } from "./util/workers.js";
+import { cli } from "./util/cli.js";
 
-const pizzaApp = {};
+const app = {};
 
-pizzaApp.init = () => {
+app.init = () => {
   pizzaServer.init();
   pizzaWorkers.init();
+  setTimeout(()=>{
+    cli.init();
+  },50)
 };
 
-pizzaApp.init();
+app.init();
