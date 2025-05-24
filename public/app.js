@@ -4,6 +4,21 @@ app.inactivityTimer = null;
 app.checkLoggedOutByServerTimer = null;
 app.renewTokenTimer = null;
 
+app.formatTimeStampToDate = (timestamp) => {
+  const dateOfTimestamp = new Date(timestamp);
+  const dateYear = dateOfTimestamp.getFullYear();
+  let dateMonth = dateOfTimestamp.getMonth()+1;
+  if (dateMonth.toString().length < 2) {
+    dateMonth = dateMonth.toString().padStart(2, "0");
+  }
+  let dateDay = dateOfTimestamp.getDate();
+  if (dateDay.toString().length < 2) {
+    dateDay = dateDay.toString().padStart(2, "0");
+  }
+  const date = `${dateYear}-${dateMonth}-${dateDay}`;
+  return date;
+};
+
 app.getToken = () => {
   const token = localStorage.getItem("token");
   return typeof token === "string" ? token : false;
@@ -135,6 +150,26 @@ app.bindForms = function () {
                 : elements[i].value;
             payload[elements[i].name] = valueOfElement;
           }
+        }
+
+        // * CREATE ACCOUNT form
+        if (formId == "accountCreate") {
+          // Formatted payload
+          payload = {
+            ...payload,
+            dateCreated: Date.now(),
+          };
+        }
+
+        // * CREATE ACCOUNT form
+        if (formId == "accountEdit") {
+          // Formatted payload
+          const dateString = new Date(payload.dateCreated);
+          const timeStamp = Date.parse(dateString.toString());
+          payload = {
+            ...payload,
+            dateCreated: timeStamp,
+          };
         }
 
         // * SHOPPING CART form
@@ -583,12 +618,16 @@ app.renewToken = function (callback) {
 // * Renew token timer
 const startRenewTokenTimer = () => {
   // * Renew token before expiration
-  const renewTokenBeforeExpirationMinute=1;
+  const renewTokenBeforeExpirationMinute = 1;
   if (!app.renewTokenTimer) {
     app.renewTokenTimer = setInterval(function () {
       if (app.config.sessionToken) {
         const currentTime = Date.now();
-        if (currentTime > app.config.sessionToken.expires - renewTokenBeforeExpirationMinute*10000) {
+        if (
+          currentTime >
+          app.config.sessionToken.expires -
+            renewTokenBeforeExpirationMinute * 10000
+        ) {
           app.renewToken(function (err) {
             if (err) {
               console.log("Error occured during token renew.");
@@ -1470,12 +1509,20 @@ app.loadAccountEditPageContent = function () {
             const passwordInputElement = document.querySelector(
               '#accountEdit [name="password"]'
             );
+            const dateCreatedInputElement = document.querySelector(
+              '#accountEdit [name="dateCreated"]'
+            );
             firstNameInputElement.value = userAccountData.firstName;
             lasttNameInputElement.value = userAccountData.lastName;
             emailInputElementEdit.value = email;
             emailInputElementDelete.value = email;
             streetInputElement.value = userAccountData.street;
-            passwordInputElement.value = ""; // * If user don't change his paswword it will remain empty
+            passwordInputElement.value = ""; // * If user don't change his password it will remain empty
+            const dateOfSignup = app.formatTimeStampToDate(
+              userAccountData.dateCreated
+            );
+            dateCreatedInputElement.value = dateOfSignup;
+            dateCreatedInputElement.setAttribute("disabled", true);
 
             // * Placing the hidden method to the form to handle the PUT request
             const hiddenInputElement = document.createElement("input");

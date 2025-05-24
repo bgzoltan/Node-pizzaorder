@@ -52,7 +52,7 @@ cli.centered = (str, width) => {
   for (let i = 0; i < padding; i++) {
     line += " ";
   }
-  line += cYellow + str + cYellow;
+  line += str;
   console.log(line);
 };
 
@@ -88,8 +88,10 @@ cli.processInput = (str) => {
       exit: "exit",
       "list menu": "listMenu",
       "list users": "listUsers",
+      "list last users": "listLastUsers",
       "more user info": "moreUserInfo",
       "list orders": "listOrders",
+      "list last orders": "listLastOrders",
       "more order info": "moreOrderInfo",
     };
 
@@ -134,6 +136,10 @@ e.on("listOrders", () => {
   cli.responders.listOrders();
 });
 
+e.on("listLastOrders", () => {
+  cli.responders.listLastOrders();
+});
+
 e.on("moreOrderInfo", (data) => {
   cli.responders.moreOrderInfo(data);
 });
@@ -156,8 +162,10 @@ cli.responders.help = () => {
     exit: "Kill the CLI and the rest of the application.",
     "list menu": "Show the current menu.",
     "list users": "Show the list of current users.",
+    "list last users": "Show the users signed up in the past 24 hours.",
     "more user info --{userId}": "Show details of the specified user.",
     "list orders": "Show the current orders.",
+    "list last orders": "Show the orders received in the past 24 hours.",
     "more order info --{orderId}": "Show details of the specified order.",
   };
 
@@ -174,7 +182,7 @@ cli.responders.help = () => {
 };
 
 cli.responders.exit = () => {
-  console.log(cYellow+"EXIT from cli."+cReset);
+  console.log(cYellow + "EXIT from cli." + cReset);
   process.exit(0);
 };
 
@@ -220,6 +228,65 @@ cli.responders.listOrders = () => {
             console.log(line);
           } else {
             console.log(cYellow + err + cReset, err, order);
+          }
+        });
+      }
+    } else {
+      console.log(cYellow + err + cReset, orders);
+    }
+  });
+};
+
+// * 24h ORDER LIST - list the orders of the past 24 hours
+cli.responders.listLastOrders = () => {
+  const paddings = [0, 25];
+  let line = "";
+
+  dataUtil.readFiles("orders", (err, orders) => {
+    let noOfRecords = orders.length;
+    let isLast24HourOrder = false;
+    if (!err && orders) {
+      // * Table title
+      cli.createTitle("Past 24 hour orders", screenWidth / 2);
+
+      // * Table head
+      line = cli.paddingText(line, "ORDER DATE", paddings[0]);
+      line = cli.paddingText(line, cRed + "ORDER ID" + cReset, paddings[1]);
+      console.log(line);
+      cli.horizontalLine(paddings[paddings.length - 1] + 20);
+
+      // * Table rows
+      for (let order of orders) {
+        const orderId = order.slice(0, -5); // cut .json
+        dataUtil.read("orders", orderId, (err, order) => {
+          noOfRecords--;
+          if (!err && order) {
+            const twentyFourHoursInMs = 1000 * 60 * 60 * 24;
+            const currentDate = Date.now();
+            if (order.date >= currentDate - twentyFourHoursInMs) {
+              isLast24HourOrder = true;
+              const dateOfOrder = new Date(order.date);
+              const displayedDate = `${dateOfOrder.getDate()}.${
+                dateOfOrder.getMonth() + 1
+              }.${dateOfOrder.getFullYear()} at ${dateOfOrder.getHours()}:${dateOfOrder.getMinutes()}`;
+              line = "";
+              line = cli.paddingText(line, displayedDate, paddings[0]);
+              line = cli.paddingText(
+                line,
+                cRed + orderId + cReset,
+                paddings[1]
+              );
+              console.log(line);
+            }
+          } else {
+            console.log(cYellow + err + cReset, err, order);
+          }
+          if (noOfRecords == 0) {
+            if (!isLast24HourOrder) {
+              console.log(
+                cYellow + "There are no orders from the past 24 hours!" + cReset
+              );
+            }
           }
         });
       }
