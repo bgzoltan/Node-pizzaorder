@@ -7,7 +7,7 @@ app.renewTokenTimer = null;
 app.formatTimeStampToDate = (timestamp) => {
   const dateOfTimestamp = new Date(timestamp);
   const dateYear = dateOfTimestamp.getFullYear();
-  let dateMonth = dateOfTimestamp.getMonth()+1;
+  let dateMonth = dateOfTimestamp.getMonth() + 1;
   if (dateMonth.toString().length < 2) {
     dateMonth = dateMonth.toString().padStart(2, "0");
   }
@@ -124,8 +124,8 @@ app.client.request = (
 
   // * Sending the request as we set up before
   xhr.send(payloadString);
-  xhr.onerror=()=>{
-    app.message('Network error occured.','error')
+  xhr.onerror = () => {
+    app.message("Network error occured.", "error");
   };
 };
 
@@ -169,7 +169,7 @@ app.bindForms = function () {
         if (formId == "accountEdit") {
           // Formatted payload
           const dateString = new Date(payload.dateCreated);
-          const timeStamp = Date.parse(dateString.toString()); 
+          const timeStamp = Date.parse(dateString.toString());
           payload = {
             ...payload,
             dateCreated: timeStamp,
@@ -413,15 +413,25 @@ app.message = (
     messageModalElement.setAttribute("class", "messageModal");
   }
 
-  buttonElement.addEventListener("click", (event) => {
+  const handleClick = () => {
     messageModalElement.removeAttribute("class");
+    buttonElement.innerText = "";
     message.innerText = "";
     buttonElement.remove();
 
     if (redirect) {
       window.location.href = redirect;
     }
-  });
+  };
+
+  buttonElement.addEventListener("click", handleClick);
+
+  // * REMOVE THE BUTTON if the user does not click on the button in 20 seconds
+  setTimeout(() => {
+    buttonElement.removeEventListener("click", handleClick);
+    handleClick();
+  }, 1000 * 20);
+
   messageCallback();
 };
 
@@ -635,6 +645,7 @@ const startRenewTokenTimer = () => {
           app.renewToken(function (err) {
             if (err) {
               console.log("Error occured during token renew.");
+              app.logoutProcess();
             } else {
               const currentDate = new Date();
               console.log(
