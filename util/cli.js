@@ -148,6 +148,10 @@ e.on("listUsers", () => {
   cli.responders.listUsers();
 });
 
+e.on("listLastUsers", () => {
+  cli.responders.listLastUsers();
+});
+
 e.on("moreUserInfo", (data) => {
   cli.responders.moreUserInfo(data);
 });
@@ -410,6 +414,65 @@ cli.responders.listUsers = () => {
       }
     } else {
       console.log(cYellow + err + cReset, users);
+    }
+  });
+};
+
+// * 24h SIGNUP USERS LIST - list the users signed up in the past 24 hours
+cli.responders.listLastUsers = () => {
+  const paddings = [0, 25];
+  let line = "";
+
+  dataUtil.readFiles("users", (err, users) => {
+    let noOfRecords = users.length;
+    let isLast24HourUsers = false;
+    if (!err && users) {
+      // * Table title
+      cli.createTitle("Past 24 hour signed up users", screenWidth / 2);
+
+      // * Table head
+      line = cli.paddingText(line, "SIGNUP DATE", paddings[0]);
+      line = cli.paddingText(line, cRed + "USER ID" + cReset, paddings[1]);
+      console.log(line);
+      cli.horizontalLine(paddings[paddings.length - 1] + 20);
+
+      // * Table rows
+      for (let user of users) {
+        const userId = user.slice(0, -5); // cut .json
+        dataUtil.read("users", userId, (err, user) => {
+          noOfRecords--;
+          if (!err && user) {
+            const twentyFourHoursInMs = 1000 * 60 * 60 * 24;
+            const currentDate = Date.now();
+            if (user.dateCreated >= currentDate - twentyFourHoursInMs) {
+              isLast24HourUsers = true;
+              const dateOfSignUp = new Date(user.dateCreated);
+              const displayedDate = `${dateOfSignUp.getDate()}.${
+                dateOfSignUp.getMonth() + 1
+              }.${dateOfSignUp.getFullYear()} at ${dateOfSignUp.getHours()}:${dateOfSignUp.getMinutes()}`;
+              line = "";
+              line = cli.paddingText(line, displayedDate, paddings[0]);
+              line = cli.paddingText(
+                line,
+                cRed + userId + cReset,
+                paddings[1]
+              );
+              console.log(line);
+            }
+          } else {
+            console.log(cYellow + err + cReset, err, order);
+          }
+          if (noOfRecords == 0) {
+            if (!isLast24HourUsers) {
+              console.log(
+                cYellow + "There are no orders from the past 24 hours!" + cReset
+              );
+            }
+          }
+        });
+      }
+    } else {
+      console.log(cYellow + err + cReset, orders);
     }
   });
 };
