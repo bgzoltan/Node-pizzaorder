@@ -81,7 +81,7 @@ app.client.request = (
   const xhr = new XMLHttpRequest();
   // * Setting up the rquest
   xhr.open(method, requestUrl, true); // true -> async request -> don't wait
-  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.setRequestHeader("Content-Type", "application/json"); // for post requests
 
   // * Adding other headers if there are
   for (const headerKey in headers) {
@@ -124,13 +124,17 @@ app.client.request = (
 
   // * Sending the request as we set up before
   xhr.send(payloadString);
+  xhr.onerror=()=>{
+    app.message('Network error occured.','error')
+  };
 };
 
-// * Bind the forms: CREATING form-data and FORMATTING payload according to the form
+// * Bind the forms: WHAT TO DO AFTER SUBMIT - CREATING form-data and FORMATTING payload according to the form
 app.bindForms = function () {
   if (document.querySelector("form")) {
     var allForms = document.querySelectorAll("form");
     for (var i = 0; i < allForms.length; i++) {
+      // * Assigning a function to submit event
       allForms[i].addEventListener("submit", function (e) {
         // Stop it from submitting
 
@@ -139,7 +143,7 @@ app.bindForms = function () {
         const path = this.action;
         const method = this.method.toUpperCase();
 
-        // * Turn the form inputs into a payload
+        // * Turn the form inputs into a payload (form data object)
         let payload = {};
         const elements = this.elements; // Selecting the form controll elements
         for (let i = 0; i < elements.length; i++) {
@@ -157,7 +161,7 @@ app.bindForms = function () {
           // Formatted payload
           payload = {
             ...payload,
-            dateCreated: Date.now(),
+            dateCreated: Date.now(), // * Extending form data with the date of signup
           };
         }
 
@@ -165,7 +169,7 @@ app.bindForms = function () {
         if (formId == "accountEdit") {
           // Formatted payload
           const dateString = new Date(payload.dateCreated);
-          const timeStamp = Date.parse(dateString.toString());
+          const timeStamp = Date.parse(dateString.toString()); 
           payload = {
             ...payload,
             dateCreated: timeStamp,

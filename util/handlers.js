@@ -500,6 +500,7 @@ handlers._users.put = (data, callback) => {
                     lastName: user.lastName,
                     street: user.street,
                     password: hashedPassword,
+                    dateCreated: user.dateCreated,
                   },
                   (err, data) => {
                     if (!err && data) {
