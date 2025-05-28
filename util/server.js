@@ -14,9 +14,9 @@ export const pizzaServer = {};
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = path.dirname(__filename);
 
-let debug = util.debuglog('server');
+let debug = util.debuglog('server'); // * To use debug in case of error
 
-// To provide ssl support must to create cert and key files:
+// * To provide ssl support must to create cert and key files:
 // openssl req -newkey rsa:2048 -new -nodes -x509 -days 365 -keyout key.pem -out cert.pem
 pizzaServer.httpsParams = {
   cert: fs.readFileSync(path.join(__dirname, "../https/localhost.pem")),
@@ -24,28 +24,36 @@ pizzaServer.httpsParams = {
   minVersion: "TLSv1.2", // Ensure at least TLS 1.2
 };
 
+// * Creating a https server with https params: unifiedServer
 pizzaServer.httpsServer = https.createServer(
   pizzaServer.httpsParams,
   (req, res) => pizzaServer.unifiedServer(req, res)
 );
 
+// * Capturing the client request, analyzing it and starting the backend process according to the route
 pizzaServer.unifiedServer = (req, res) => {
+  // * Understanding the request
   const headers = req.headers;
   const method = req.method.toLowerCase();
+ 
+  // * Capturing the url, the query string 
   const parsedUrl = url.parse(req.url, true);
   const query = parsedUrl.query;
   const pathName = parsedUrl.pathname;
   const trimmedPath = pathName.slice(1);
   const decoder = new StringDecoder("utf-8");
 
+  // * Capturing the payload
   let payloadBuffer = "";
   req.on("data", (dataChunk) => {
     payloadBuffer = payloadBuffer + decoder.write(dataChunk);
   });
 
+  // * When the payload is received starting to analyzing the route
   req.on("end", () => {
     payloadBuffer += decoder.end();
 
+    // * Creating the data object to pass it to the handlers
     const data = {
       headers,
       pathName,
@@ -56,6 +64,7 @@ pizzaServer.unifiedServer = (req, res) => {
     };
 
     let selectedRouter = false;
+    // * Selecting the route handler according to the trimmedPath
     if (trimmedPath.includes("public")) {
       selectedRouter = typeof Object.keys(pizzaServer.routing).includes(
         "public"
@@ -89,26 +98,31 @@ pizzaServer.unifiedServer = (req, res) => {
         payload = typeof payload === "string" ? payload : "";
         payloadString = payload;
       }
+
       if (contentType == "js") {
         headers = { "Content-Type": "text/javascript" };
         payload = typeof Buffer.isBuffer(payload) ? payload : "";
         payloadString = payload;
       }
+
       if (contentType == "css") {
         headers = { "Content-Type": "text/css" };
         payload = typeof Buffer.isBuffer(payload) ? payload : "";
         payloadString = payload;
       }
+
       if (contentType == "jpeg") {
         headers = { "Content-Type": "image/jpeg" };
         payload = typeof Buffer.isBuffer(payload) ? payload : "";
         payloadString = payload;
       }
+
       if (contentType == "png") {
         headers = { "Content-Type": "image/png" };
         payload = typeof Buffer.isBuffer(payload) ? payload : "";
         payloadString = payload;
       }
+
       if (contentType == "ico") {
         headers = { "Content-Type": "image/x-icon" };
         payload = typeof Buffer.isBuffer(payload) ? payload : "";
@@ -135,7 +149,7 @@ pizzaServer.unifiedServer = (req, res) => {
 };
 
 pizzaServer.routing = {
-  "": handlers.index,
+  "": handlers.index, // * Special route to start the page
   "account/create": handlers.accountCreate,
   "account/edit": handlers.accountEdit,
   "account/delete": handlers.accountDelete,
