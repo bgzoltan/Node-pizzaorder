@@ -381,7 +381,7 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
 
   if (formId == "order") {
     app.message(
-      "Your orders is succesfully accepted. We sent you a confirmation emai about Thank you.",
+      "Your order is succesfully accepted. We sent a confirmation emai about it. Thank you.",
       "info",
       "/"
     );

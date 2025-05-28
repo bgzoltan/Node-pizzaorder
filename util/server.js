@@ -6,11 +6,15 @@ import url from "url";
 import fs from "fs";
 import { StringDecoder } from "string_decoder";
 import { handlers } from "./handlers.js";
+import util from 'util';
+
 
 export const pizzaServer = {};
 // Define __filename and __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = path.dirname(__filename);
+
+let debug = util.debuglog('server');
 
 // To provide ssl support must to create cert and key files:
 // openssl req -newkey rsa:2048 -new -nodes -x509 -days 365 -keyout key.pem -out cert.pem
@@ -59,7 +63,6 @@ pizzaServer.unifiedServer = (req, res) => {
         ? pizzaServer.routing["public"]
         : false;
     } else {
-
       selectedRouter =
         typeof pizzaServer.routing[trimmedPath] !== undefined
           ? pizzaServer.routing[trimmedPath]
@@ -67,64 +70,66 @@ pizzaServer.unifiedServer = (req, res) => {
     }
 
     const handlerCallback = (statusCode, payload, contentType = "json") => {
-      try {
-        statusCode = typeof statusCode == "number" ? statusCode : 200;
-        let payloadString = "";
-        let headers = { "Content-Type": "application/json" };
+      statusCode = typeof statusCode == "number" ? statusCode : 200;
+      let payloadString = "";
+      let headers = { "Content-Type": "application/json" };
 
-        if (contentType == "json") {
-          payload = typeof payload == "object" ? payload : {};
-          payloadString = JSON.stringify(payload);
-        }
-
-
-        if (payload._method) {data.method=payload._method; delete payload._method}
-
-        if (contentType == "html") {
-          headers = { "Content-Type": "text/html" };
-          payload = typeof payload === "string" ? payload : "";
-          payloadString = payload;
-        }
-        if (contentType == "js") {
-          headers = { "Content-Type": "text/javascript" };
-          payload = typeof Buffer.isBuffer(payload) ? payload : "";
-          payloadString = payload;
-        }
-        if (contentType == "css") {
-          headers = { "Content-Type": "text/css" };
-          payload = typeof Buffer.isBuffer(payload) ? payload : "";
-          payloadString = payload;
-        }
-        if (contentType == "jpeg") {
-          headers = { "Content-Type": "image/jpeg" };
-          payload = typeof Buffer.isBuffer(payload) ? payload : "";
-          payloadString = payload;
-        }
-        if (contentType == "png") {
-          headers = { "Content-Type": "image/png" };
-          payload = typeof Buffer.isBuffer(payload) ? payload : "";
-          payloadString = payload;
-        }
-        if (contentType == "ico") {
-          headers = { "Content-Type": "image/x-icon" };
-          payload = typeof Buffer.isBuffer(payload) ? payload : "";
-          payloadString = payload;
-        }
-
-  
-        res.writeHead(statusCode, headers);
-        res.end(payloadString);
-      } catch (error) {
-        console.error("Error in response: ", error);
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ Error: "Internal Server Error" }));
+      if (contentType == "json") {
+        payload = typeof payload == "object" ? payload : {};
+        payloadString = JSON.stringify(payload);
       }
+
+      if (payload._method) {
+        data.method = payload._method;
+        delete payload._method;
+      }
+
+      if (contentType == "html") {
+        headers = { "Content-Type": "text/html" };
+        payload = typeof payload === "string" ? payload : "";
+        payloadString = payload;
+      }
+      if (contentType == "js") {
+        headers = { "Content-Type": "text/javascript" };
+        payload = typeof Buffer.isBuffer(payload) ? payload : "";
+        payloadString = payload;
+      }
+      if (contentType == "css") {
+        headers = { "Content-Type": "text/css" };
+        payload = typeof Buffer.isBuffer(payload) ? payload : "";
+        payloadString = payload;
+      }
+      if (contentType == "jpeg") {
+        headers = { "Content-Type": "image/jpeg" };
+        payload = typeof Buffer.isBuffer(payload) ? payload : "";
+        payloadString = payload;
+      }
+      if (contentType == "png") {
+        headers = { "Content-Type": "image/png" };
+        payload = typeof Buffer.isBuffer(payload) ? payload : "";
+        payloadString = payload;
+      }
+      if (contentType == "ico") {
+        headers = { "Content-Type": "image/x-icon" };
+        payload = typeof Buffer.isBuffer(payload) ? payload : "";
+        payloadString = payload;
+      }
+
+      res.writeHead(statusCode, headers);
+      res.end(payloadString);
     };
 
     if (!selectedRouter) {
       handlerCallback(404, "Error: the selected url is invalid!");
     } else {
-      selectedRouter(data, handlerCallback);
+      try {
+        selectedRouter(data, handlerCallback);
+      } catch (error) {
+        // * The server will not crash with this error handling
+        debug(error); // NODE_DEBUG=server node index.js
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ Error: "An unknown error has occured." }));
+      }
     }
   });
 };
@@ -145,6 +150,7 @@ pizzaServer.routing = {
   "api/shoppingcart": handlers.shoppingcart,
   "api/order": handlers.order,
   "api/logoutcheck": handlers.logoutcheck,
+  "examples/error": handlers.errorExample,
   public: handlers.public,
 };
 

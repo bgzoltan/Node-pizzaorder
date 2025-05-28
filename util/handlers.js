@@ -15,7 +15,7 @@ import {
   addUniversalTemplates,
   getStaticAsset,
   isValidUserDataForModification,
-  isValidPassword
+  isValidPassword,
 } from "./helpers.js";
 import { dataUtil } from "./dataUtils.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
@@ -31,20 +31,24 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET, {
 export const handlers = {};
 
 // * FRONTEND HANDLERS FOR HTML **************
+// * reading the template files from the server, creating a HTML page and return it to the client
 
+// * Starting the page (site) handler
 handlers.index = (data, callback) => {
-  // Index page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Pizza Order Application",
     "head.description": "Order your favourite pizzaa 0-24h on the Gold Coast",
     "body.class": "index",
     "header.title": "Pizza House Gold Coast",
-    "header.text": "You can order your favourite pizza 0-24H across the Gold Coast area",
+    "header.text":
+      "You can order your favourite pizza 0-24H across the Gold Coast area",
   };
   if (data.method == "get") {
+    // * Reading the template file and extending with templateVariables
     getTemplate("index", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -62,12 +66,13 @@ handlers.index = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * CREATE USER ACCOUNT - page handler
 handlers.accountCreate = (data, callback) => {
-  // Index page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Create Account",
     "head.description": "Signup is very easy",
@@ -79,7 +84,7 @@ handlers.accountCreate = (data, callback) => {
   if (data.method == "get") {
     getTemplate("accountCreate", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -97,12 +102,13 @@ handlers.accountCreate = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * EDIT USER ACCOUNT - page handler
 handlers.accountEdit = (data, callback) => {
-  // Page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Edit Account",
     "head.description": "User can edit profile data",
@@ -114,7 +120,7 @@ handlers.accountEdit = (data, callback) => {
   if (data.method == "get") {
     getTemplate("accountEdit", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -132,12 +138,13 @@ handlers.accountEdit = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * DELETE USER ACCOUNT - page handler
 handlers.accountDelete = (data, callback) => {
-  // Page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Delete Account",
     "head.description": "User can delete account",
@@ -149,7 +156,7 @@ handlers.accountDelete = (data, callback) => {
   if (data.method == "get") {
     getTemplate("accountDelete", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -167,16 +174,17 @@ handlers.accountDelete = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
-
+// * Handling the PUBLIC ASSETS like logo, background pictore, ico file
 handlers.public = (data, callback) => {
   if (data) {
     const { method } = data;
     if (method == "get") {
       const assetFileName = data.pathName.replace("/public/", "");
+      // * Reading the asset file and return it
       getStaticAsset(assetFileName, (err, assetData) => {
         if (!err && assetData) {
           const contentType = data.trimmedPath.split(".").pop();
@@ -186,15 +194,16 @@ handlers.public = (data, callback) => {
         }
       });
     } else {
-      callback(405, { Error: "This method is not allowed." });
+      callback(405, { Error: "Only 'GET' method is allowed." });
     }
   } else {
     callback(400, "Missing data.");
   }
 };
 
+// * USER LOGIN - page handler 
 handlers.login = (data, callback) => {
-  // Login page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Login",
     "head.description": "Login is very easy",
@@ -206,7 +215,7 @@ handlers.login = (data, callback) => {
   if (data.method == "get") {
     getTemplate("login", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -224,12 +233,13 @@ handlers.login = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * USER LOGOUT - page handler
 handlers.logout = (data, callback) => {
-  // Login page specific variables
+  // * Page specific variables
   const templateVariables = {
     "logout.title": "Log Out Page",
     "logout.description": "Logout page",
@@ -241,7 +251,7 @@ handlers.logout = (data, callback) => {
   if (data.method == "get") {
     getTemplate("logout", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -259,12 +269,13 @@ handlers.logout = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * MENU LIST - page handler
 handlers.menulist = (data, callback) => {
-  // Page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Pizza Menu",
     "head.description": "List of our pizzas",
@@ -276,7 +287,7 @@ handlers.menulist = (data, callback) => {
   if (data.method == "get") {
     getTemplate("menuList", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -294,12 +305,13 @@ handlers.menulist = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * USER CAN CREATE, MODIFY AND DELETE SHOPPING CART - page handler
 handlers.shopping_cart = (data, callback) => {
-  // Page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Your shopping cart",
     "head.description": "You can select your pizza here",
@@ -311,7 +323,7 @@ handlers.shopping_cart = (data, callback) => {
   if (data.method == "get") {
     getTemplate("shoppingCart", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -329,24 +341,26 @@ handlers.shopping_cart = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
+// * USER CAN SEND ORDER - page handler
 handlers.pizza_order = (data, callback) => {
-  // Page specific variables
+  // * Page specific variables
   const templateVariables = {
     "head.title": "Your order",
     "head.description": "You can order ypur pizza here",
     "body.class": "order",
-   "header.title": "Order your pizza",
-    "header.text": "You can order your favourite pizza here if you are logged in",
+    "header.title": "Order your pizza",
+    "header.text":
+      "You can order your favourite pizza here if you are logged in",
   };
 
   if (data.method == "get") {
     getTemplate("order", templateVariables, (err, templateData) => {
       if (!err && templateData) {
-        // Add the universal header and footer
+        // * Add the universal header, footer and return the html page
         addUniversalTemplates(
           templateData,
           templateVariables,
@@ -364,11 +378,18 @@ handlers.pizza_order = (data, callback) => {
       }
     });
   } else {
-    callback(405, { Error: "method is not allowed." });
+    callback(405, { Error: "Only 'GET' method is allowed." });
   }
 };
 
 // * HANBDLERS FOR JSON
+// * handling backend processes to provide the necessary data to the frontend
+
+// * EXAMPLE ERROR HANDLERS
+handlers.errorExample = (data, callback) => {
+  let err = new Error("This is an example");
+  throw(err);
+};
 
 // * USERS HANDLERS *****************
 handlers._users = {};
@@ -387,7 +408,7 @@ handlers._users.post = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
   if (!payload) {
-    callback(400, { Error: "missing data." });
+    callback(400, { Error: "Missing payload." });
   } else {
     const user = JSON.parse(payload);
 
@@ -406,7 +427,10 @@ handlers._users.post = (data, callback) => {
         }
       );
     } else {
-      callback(400, { Error: "Missing or invalid data. The password must be min. 8 char long and contain 1 special character and 1 number." });
+      callback(400, {
+        Error:
+          "Missing or invalid user data. The password must be min. 8 char long and should contain 1 special character and 1 number!",
+      });
     }
   }
 };
@@ -442,10 +466,10 @@ handlers._users.get = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing or invalid email." });
+    callback(400, { Error: "Missing or invalid email." });
   }
 };
 
@@ -455,7 +479,7 @@ handlers._users.put = (data, callback) => {
   const payload = typeof data.payload == "string" ? data.payload : false;
 
   if (!payload) {
-    callback(400, { Error: "missing data." });
+    callback(400, { Error: "Missing payload." });
   } else {
     const user = JSON.parse(payload);
 
@@ -469,27 +493,26 @@ handlers._users.put = (data, callback) => {
       if (tokenId) {
         isValidNotExpiredToken(tokenId, user.email, function (err) {
           if (!err) {
-
             // * Reading the original password
-            dataUtil.read('users',user.email,(err,userData)=>{
+            dataUtil.read("users", user.email, (err, userData) => {
               if (!err && userData) {
-                let hashedPassword=userData.password;
-                if (user.password.trim().length==0) {
+                let hashedPassword = userData.password;
+                if (user.password.trim().length == 0) {
                   // * User did not change the password because the default value is an empty string on the form
                 } else {
                   // * User changed the password
                   const password =
-                  typeof user.password == "string" &&
-                  user.password.trim().length >= 8 &&
-                  isValidPassword(user.password)
-                    ? user.password
-                    : false;
+                    typeof user.password == "string" &&
+                    user.password.trim().length >= 8 &&
+                    isValidPassword(user.password)
+                      ? user.password
+                      : false;
                   if (password) {
                     hashedPassword = hash(password);
                   } else {
-                    callback(400,{Error:'invalid password.'})
+                    callback(400, { Error: "Invalid password." });
                   }
-                };
+                }
 
                 // * The user cannot update his email address
                 dataUtil.update(
@@ -513,9 +536,9 @@ handlers._users.put = (data, callback) => {
                   }
                 );
               } else {
-                callback(400,{Error:'could not read user data.'})
+                callback(400, { Error: "The user does not exist or semoething went wrong." });
               }
-            })
+            });
           } else {
             callback(403, {
               Error: err,
@@ -523,10 +546,10 @@ handlers._users.put = (data, callback) => {
           }
         });
       } else {
-        callback(400, { Error: "missing or invalid token." });
+        callback(400, { Error: "Missing or invalid token." });
       }
     } else {
-      callback(400, { Error: "missing or invalid data." });
+      callback(400, { Error: "Missing or invalid user data." });
     }
   }
 };
@@ -534,7 +557,8 @@ handlers._users.put = (data, callback) => {
 // * DELETE USER DATA
 // * email query and token are necessary
 handlers._users.delete = (data, callback) => {
-  const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
+  const payload =
+    typeof data.payload == "string" ? JSON.parse(data.payload) : false;
 
   const email =
     typeof payload.email == "string" && isValidEmail(payload.email)
@@ -564,19 +588,18 @@ handlers._users.delete = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing or invalid email." });
+    callback(400, { Error: "Missing or invalid email." });
   }
 };
 
 handlers.users = (data, callback) => {
-
   if (isAcceptableMethod(["GET", "POST", "DELETE", "PUT"], data)) {
     handlers._users[data.method](data, callback);
   } else {
-    callback(405, { Error: "this request method is not allowed." });
+    callback(405, { Error: "This request method is not allowed." });
   }
 };
 
@@ -591,10 +614,10 @@ handlers._tokens = {};
 // }
 handlers._tokens.post = (data, callback) => {
   // * Time in minutes of token expiration
-  const tokenExpireTime=2;
+  const tokenExpireTime = 5;
   const payload = typeof data.payload == "string" ? data.payload : false;
   if (!payload) {
-    callback(400, { Error: "missing token data." });
+    callback(400, { Error: "Missing payload." });
   } else {
     const token = JSON.parse(payload);
     if (isValidToken(token)) {
@@ -602,7 +625,6 @@ handlers._tokens.post = (data, callback) => {
 
       dataUtil.read("users", email, (err, userData) => {
         if (!err && userData) {
-
           // * Checking whether the user already logged in
           // * I use loggedin folder to store the users who are logged in
           dataUtil.read("loggedin", email, (err, logData) => {
@@ -612,7 +634,7 @@ handlers._tokens.post = (data, callback) => {
               });
             }
             if (err != 404 && logData) {
-              callback(409, { Error: "user already logged in." });
+              callback(409, { Error: "You ares already logged in." });
             } else {
               const hashedPassword = hash(password);
 
@@ -623,8 +645,8 @@ handlers._tokens.post = (data, callback) => {
                 const tokenObject = {
                   id: tokenId,
                   email,
-                  expires: Date.now() + 1000 * 60 * tokenExpireTime
-                 };
+                  expires: Date.now() + 1000 * 60 * tokenExpireTime,
+                };
 
                 // * Create the token if passdword is ok
                 dataUtil.create(
@@ -652,34 +674,32 @@ handlers._tokens.post = (data, callback) => {
                           } else {
                             callback(err, {
                               Error:
-                                "creating logged in file: " + loggedInData["Error"],
+                                "Creating logged in file: " +
+                                loggedInData["Error"],
                             });
                           }
                         }
                       );
                     } else {
                       callback(err, {
-                        Error:
-                          "creating token: " +tokenData["Error"],
+                        Error: "Creating token: " + tokenData["Error"],
                       });
                     }
                   }
                 );
               } else {
-                callback(401, { Error: "the password is invalid." });
+                callback(401, { Error: "The password is invalid." });
               }
             }
           });
         } else {
           if (err == 404) {
             callback(401, {
-              Error: "invalid token: " + userData["Error"],
+              Error: "Invalid token: " + userData["Error"],
             });
           } else {
             callback(401, {
-              Error:
-                "checking the user: " +
-                userData["Error"],
+              Error: "Checking the user: " + userData["Error"],
             });
           }
         }
@@ -693,10 +713,10 @@ handlers._tokens.post = (data, callback) => {
 // * Renew token
 handlers._tokens.put = (data, callback) => {
   // * Time in minutes of then new token expiration
-  const renewedTokenExpireTime=2;
+  const renewedTokenExpireTime = 2;
   const payload = typeof data.payload == "string" ? data.payload : false;
   if (!payload) {
-    callback(400, { Error: "missing token data." });
+    callback(400, { Error: "Missing payload." });
   } else {
     const token = JSON.parse(payload);
     const { email, id } = token;
@@ -710,14 +730,14 @@ handlers._tokens.put = (data, callback) => {
           dataUtil.read("tokens", tokenId, (err, tokenData) => {
             let tokenObject = {};
             const currentDate = new Date();
-            const expires = Date.now() + 1000 * 60 * renewedTokenExpireTime
+            const expires = Date.now() + 1000 * 60 * renewedTokenExpireTime;
             if (!err && tokenData.email == email) {
               tokenObject = {
                 ...tokenData,
                 expires,
               };
             } else {
-              callback(403, { Error: "not authorized to renew the token." });
+              callback(403, { Error: "Authorization issue. Cannot renew the token." });
             }
             // * Renewing the token.
             dataUtil.update(
@@ -735,25 +755,24 @@ handlers._tokens.put = (data, callback) => {
                 } else {
                   callback(400, {
                     Error:
-                      "error during renew token:" + updatedTokenData["Error"],
+                      "Error with renew token:" + updatedTokenData["Error"],
                   });
                 }
               }
             );
           });
         } else {
-          callback(400, { Error: "error with token id during renew token." });
+          callback(400, { Error: "No tokenId when try to renew token." });
         }
       } else {
         callback(err, {
           Error:
-            "error occured during token renew login check: " + logData["Error"],
+            "Error occured during token renew login check: " + logData["Error"],
         });
       }
     });
   }
 };
-
 
 // * LOGOUT
 handlers._tokens.delete = (data, callback) => {
@@ -779,10 +798,10 @@ handlers._tokens.delete = (data, callback) => {
                     currentDate.getMonth() + 1
                   }.${currentDate.getFullYear()} at ${currentDate.getHours()}:${currentDate.getMinutes()}`
                 );
-                callback(false, { success: "logout was successsfull." });
+                callback(false, { success: "Logout was successsfull." });
               } else {
                 callback(err, {
-                  Error: "error occured during logout, " + loggedInData,
+                  Error: "Error occured during logout, " + loggedInData,
                 });
               }
             });
@@ -798,16 +817,16 @@ handlers._tokens.delete = (data, callback) => {
       }
     });
   } else {
-    callback(400, { Error: "the token is missing or invalid." });
+    callback(400, { Error: "The token is missing or invalid." });
   }
 };
 
 handlers.tokens = (data, callback) => {
-  if (isAcceptableMethod(["POST", "PUT", "DELETE","GET"], data)) {
+  if (isAcceptableMethod(["POST", "PUT", "DELETE", "GET"], data)) {
     // POST - login, DELETE - logout
     handlers._tokens[data.method](data, callback);
   } else {
-    callback(405, { Error: "this request method is not allowed." });
+    callback(405, { Error: "This request method is not allowed." });
   }
 };
 
@@ -819,7 +838,7 @@ handlers.menu = (data, callback) => {
   if (isAcceptableMethod(["GET"], data)) {
     handlers._menu[data.method](data, callback);
   } else {
-    callback(405, { Error: "this request method is not allowed." });
+    callback(405, { Error: "This request method is not allowed." });
   }
 };
 
@@ -845,10 +864,10 @@ handlers._menu.get = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing or invalid user email." });
+    callback(400, { Error: "Missing or invalid user email." });
   }
 };
 
@@ -857,10 +876,10 @@ handlers._menu.get = (data, callback) => {
 handlers._shoppingcart = {};
 
 handlers.shoppingcart = (data, callback) => {
-  if (isAcceptableMethod(["POST", "PUT", "DELETE","GET"], data)) {
+  if (isAcceptableMethod(["POST", "PUT", "DELETE", "GET"], data)) {
     handlers._shoppingcart[data.method](data, callback);
   } else {
-    callback(405, { Error: "this request method is not allowed." });
+    callback(405, { Error: "This request method is not allowed." });
   }
 };
 
@@ -913,7 +932,7 @@ handlers._shoppingcart.post = (data, callback) => {
                     if (!err && shoppingCartData) {
                       callback(405, {
                         Error:
-                          "shopping card already exists, you can modify or delete it.",
+                          "The shopping cart already exists, you can modify or delete it.",
                       });
                     } else {
                       // * Check the orderable items.
@@ -945,7 +964,7 @@ handlers._shoppingcart.post = (data, callback) => {
                   }
                 );
               } else {
-                callback(400, { Error: "missing shopping cart items." });
+                callback(400, { Error: "Missing shopping cart items." });
               }
             }
           });
@@ -954,10 +973,10 @@ handlers._shoppingcart.post = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing shopping cart data." });
+    callback(400, { Error: "Missing shopping cart data." });
   }
 };
 
@@ -1024,13 +1043,13 @@ handlers._shoppingcart.put = (data, callback) => {
                       );
                     } else {
                       callback(405, {
-                        Error: "shopping card does not exists.",
+                        Error: "Shopping cart does not exists.",
                       });
                     }
                   }
                 );
               } else {
-                callback(400, { Error: "missing shopping cart items." });
+                callback(400, { Error: "Missing shopping cart items." });
               }
             }
           });
@@ -1039,10 +1058,10 @@ handlers._shoppingcart.put = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing shopping cart data." });
+    callback(400, { Error: "Missing shopping cart data." });
   }
 };
 
@@ -1060,22 +1079,18 @@ handlers._shoppingcart.get = (data, callback) => {
     if (tokenId) {
       isValidNotExpiredToken(tokenId, email, function (err) {
         if (!err) {
-          
           // * Checking whether the user already has a shopping cart
           dataUtil.read("shopping-carts", email, (err, shoppingCartData) => {
             if (!err && shoppingCartData) {
-              callback(false,shoppingCartData)
+              callback(false, shoppingCartData);
             } else {
-              if (err==404) {
+              if (err == 404) {
                 callback(err, {
-                  Error:
-                    "Shopping cart is empty."
+                  Error: "Shopping cart is empty.",
                 });
               } else {
                 callback(err, {
-                  Error:
-                    "Shopping cart:" +
-                    shoppingCartData["Error"],
+                  Error: "Shopping cart:" + shoppingCartData["Error"],
                 });
               }
             }
@@ -1085,18 +1100,19 @@ handlers._shoppingcart.get = (data, callback) => {
             Error: err,
           });
         }
-      })
+      });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing data." });
+    callback(400, { Error: "Missing data." });
   }
 };
 
 // * DELETE SHOPPING CART
 handlers._shoppingcart.delete = (data, callback) => {
-  const payload = typeof data.payload == "string" ? JSON.parse(data.payload) : false;
+  const payload =
+    typeof data.payload == "string" ? JSON.parse(data.payload) : false;
 
   const email =
     typeof payload.email == "string" && isValidEmail(payload.email)
@@ -1126,25 +1142,22 @@ handlers._shoppingcart.delete = (data, callback) => {
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing user data." });
+    callback(400, { Error: "Missing user data." });
   }
 };
 
-handlers._order={};
-
+handlers._order = {};
 
 handlers.order = (data, callback) => {
   if (isAcceptableMethod(["POST"], data)) {
     handlers._order[data.method](data, callback);
   } else {
-    callback(405, { Error: "this request method is not allowed." });
+    callback(405, { Error: "This request method is not allowed." });
   }
 };
-
-
 
 // * ORDER AND PAYMENT BY CARD
 // sample payment payload in json:
@@ -1227,7 +1240,10 @@ handlers._order.post = (data, callback) => {
 
                         // * Email meassage html form
                         // * Cent is converted back to dollar
-                        const modifiedPaymentDetails={...paymentDetails,amount:amount/100};
+                        const modifiedPaymentDetails = {
+                          ...paymentDetails,
+                          amount: amount / 100,
+                        };
                         const htmlMessage = formatMessage(
                           shoppingCartData,
                           modifiedPaymentDetails,
@@ -1279,7 +1295,7 @@ handlers._order.post = (data, callback) => {
             });
           } else {
             callback(400, {
-              Error: `the following data is missing or invalid: ${
+              Error: `The following data is missing or invalid: ${
                 email ? "" : "email "
               } ${amount ? "" : "amount "} ${currency ? "" : "currency."}`,
             });
@@ -1287,20 +1303,18 @@ handlers._order.post = (data, callback) => {
         } else {
           callback(err, {
             Error:
-              "shopping cart is empty or something went wrong: " +
+              "Shopping cart is empty or something went wrong: " +
               shoppingCartData["Error"],
           });
         }
       });
     } else {
-      callback(400, { Error: "missing or invalid token." });
+      callback(400, { Error: "Missing or invalid token." });
     }
   } else {
-    callback(400, { Error: "missing or invalid payment data." });
+    callback(400, { Error: "Missing or invalid payment data." });
   }
 };
-
-
 
 // * LOGOUTCHECK HANDLERS *****************
 
@@ -1310,28 +1324,28 @@ handlers.logoutcheck = (data, callback) => {
   if (isAcceptableMethod(["GET"], data)) {
     handlers._logoutcheck[data.method](data, callback);
   } else {
-    callback(405, { Error: "this request method is not allowed." });
+    callback(405, { Error: "This request method is not allowed." });
   }
 };
 
 // * Checking if the user logged out.
 handlers._logoutcheck.get = (data, callback) => {
-  const { query }=data;
+  const { query } = data;
   if (!query) {
-    callback(400, { Error: "missing query data." });
+    callback(400, { Error: "Missing query data." });
   } else {
-    const {email} = query;
+    const { email } = query;
     if (email) {
       // * Checking if the user already logged out
       dataUtil.read("loggedin", email, (err, loggedInData) => {
         if (!err && loggedInData) {
-          callback(false,{})
+          callback(false, {});
         } else {
-          callback(err, { Error: loggedInData['Error']});
+          callback(err, { Error: loggedInData["Error"] });
         }
       });
     } else {
-      callback(400, { Error: "missing query data." });
+      callback(400, { Error: "Missing query data." });
     }
   }
 };
