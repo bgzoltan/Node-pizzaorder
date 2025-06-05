@@ -1,14 +1,14 @@
 import readline from "readline";
 import util from "util";
 const debug = util.debuglog("cli");
-import events from "events";
+import Events from "events";
 import { dataUtil } from "./dataUtils.js";
 import { isValidEmail } from "./helpers.js";
 import { pizzaMenuList } from "../data/menu/menu.js";
-class _events extends events {}
+class _Events extends Events {}
 
 // * Constant values;
-const e = new _events();
+const event = new _Events();
 const screenWidth = process.stdout.columns;
 // * Colors
 const cRed = "\x1b[31m";
@@ -102,7 +102,8 @@ cli.processInput = (str) => {
         if (str.toLowerCase().includes("--")) {
           data = str.toLowerCase().split("--")[1];
         }
-        e.emit(uniqueInputs[key], data);
+        // * Generating an event depending on he input
+        event.emit(uniqueInputs[key], data);
         found = true;
       }
     }
@@ -114,45 +115,45 @@ cli.processInput = (str) => {
   }
 };
 
-// * INPUT HANDLERS
+// * EVENT HANDLERS
 
-e.on("man", () => {
+event.on("man", () => {
   cli.responders.help();
 });
 
-e.on("help", () => {
+event.on("help", () => {
   cli.responders.help();
 });
 
-e.on("exit", () => {
+event.on("exit", () => {
   cli.responders.exit();
 });
 
-e.on("listMenu", () => {
+event.on("listMenu", () => {
   cli.responders.listMenu();
 });
 
-e.on("listOrders", () => {
+event.on("listOrders", () => {
   cli.responders.listOrders();
 });
 
-e.on("listLastOrders", () => {
+event.on("listLastOrders", () => {
   cli.responders.listLastOrders();
 });
 
-e.on("moreOrderInfo", (data) => {
+event.on("moreOrderInfo", (data) => {
   cli.responders.moreOrderInfo(data);
 });
 
-e.on("listUsers", () => {
+event.on("listUsers", () => {
   cli.responders.listUsers();
 });
 
-e.on("listLastUsers", () => {
+event.on("listLastUsers", () => {
   cli.responders.listLastUsers();
 });
 
-e.on("moreUserInfo", (data) => {
+event.on("moreUserInfo", (data) => {
   cli.responders.moreUserInfo(data);
 });
 
